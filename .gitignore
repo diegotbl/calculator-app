@@ -1,0 +1,28 @@
+# Go (backend)
+/backend/server
+/backend/cmd/server/server
+*.exe
+*.test
+*.out
+coverage.out
+
+# Node / Vite (frontend)
+node_modules/
+/frontend/dist/
+/frontend/coverage/
+*.local
+
+# Claude Code (personal, machine-local settings)
+.claude/settings.local.json
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Env
+.env
+.env.*
+!.env.example
