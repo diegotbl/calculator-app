@@ -100,7 +100,21 @@ cd frontend && npm test              # one-off run
 cd frontend && npm run test:coverage # run + coverage summary
 ```
 
-Coverage summary: _to be filled in once the implementation and tests land._
+### Coverage
+
+Backend — `cd backend && go test ./... -cover`:
+
+| Package | Coverage |
+| ------- | -------- |
+| `internal/calculator` | **100.0%** |
+| `internal/handler` | **100.0%** |
+| `cmd/server` | 48.0% |
+
+`cmd/server` is lower because `main()` itself — building the `http.Server` and blocking on
+`ListenAndServe` — can't be exercised from a unit test. The logic that has branches, `router()`
+and `port()`, is fully covered by `cmd/server/main_test.go`.
+
+Frontend — _to be filled in once the frontend tests land._
 
 ### Toolchain note
 
