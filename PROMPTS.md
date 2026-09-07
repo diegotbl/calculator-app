@@ -211,3 +211,20 @@ Reviewed both doc diffs, confirmed the README numbers still matched a live cover
 
 Ran this skill to append Session 4, then committed `CLAUDE.md` and `PROMPTS.md`.
 
+### Prompt 12
+
+> We finished for this session or is there still something missing for backend implementation?
+
+Re-ran `gofmt`, `go vet`, and the full test suite, and cross-checked every row of the
+`DECISIONS.md` error tables against a test. Backend confirmed complete. Found that
+`frontend/vite.config.ts` has no `server.proxy` block even though DECISIONS.md T4 and the README
+both describe one, so the API is reachable by `curl` but not from a browser on `:5173`.
+
+### Prompt 13
+
+> Document the gaps you found in a file. Might be TECHNICAL_DEBTS.md for example
+
+Created `TECHNICAL_DEBTS.md`: four open gaps (missing Vite proxy, leftover Vite scaffold files,
+Node 20-era dependency pins, unfilled frontend coverage) and three deliberate omissions with their
+reasoning (no graceful shutdown, no request body size limit, `main()` left uncovered at 48%).
+
