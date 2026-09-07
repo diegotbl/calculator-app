@@ -99,3 +99,4 @@ calculator-app/
 - Don't add Docker, CI config, or extra endpoints unless I ask — those are explicitly optional in
   the assignment.
 - When you finish a feature, remind me to log the prompt(s) used in PROMPTS.md.
+- Don't commit or push when you're done implementing. Changes will be reviewed and user will explicitely asked for commits and pushes.

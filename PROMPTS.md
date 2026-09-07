@@ -3,7 +3,7 @@
 Per the assignment instructions, this file records the AI prompts used while building the project,
 in chronological order, with a short note on what each one produced.
 
-Tool: Claude Code (Sonnet 5).
+Tool: Claude Code (Sonnet 5; switched to Opus 5 partway through Session 4).
 
 ---
 
@@ -93,4 +93,121 @@ links into `DECISIONS.md`; removed the requirements walls.
 
 Added a two-line pointer to `DECISIONS.md` near the top of `CLAUDE.md`. Ran this skill to append
 Session 2.
+
+---
+
+## Session 3 — 2026-09-07 — Initial commit
+
+### Prompt 1
+
+> Create initial commit on master branch and push to origin.
+
+Added `.claude/settings.local.json` to `.gitignore`, staged all files, created root commit
+`bc63863` ("Initial commit: project scaffolding and assignment docs", 25 files) on `master` and
+pushed with `-u` to `origin`. Flagged that `user.email` was still a work address.
+
+### Prompt 2
+
+> Change my user.email to diegotblima@gmail.com. Amend the commit
+
+Corrected local `user.email` to `diegotblima@gmail.com`, amended again with `--reset-author`
+(commit `23d2533`), force-pushed with `--force-with-lease`.
+
+### Prompt 3
+
+> log prompts
+
+Ran this skill to append Session 3.
+
+---
+
+## Session 4 — 2026-09-07 — Backend implementation
+
+### Prompt 1
+
+> Let's start with backend implementation. Plan
+
+Entered plan mode. Confirmed `backend/` did not exist and Go 1.27.1 was on PATH; read
+`DECISIONS.md` and treated it as the spec. Wrote a four-chunk plan (calculator → handler → server
+→ docs) to the plan file. No project files changed.
+
+### Prompt 2
+
+> Instead of keeping all calculation logic inside calculator.go, what do you think about crating
+> small files each dealing with only one operation?
+
+Recommended against one file per operation: the seven operations are one-line functions, and
+idiomatic Go groups small related functions in a single file per package. Offered three layouts;
+user selected one `calculator.go`. No files changed.
+
+### Prompt 3
+
+> Change model to Opus 5. Implement. Create a new branch for that implementation.
+
+Noted that the model cannot be switched from inside the session (user ran `/model`; the session
+continued on Opus 5). Created branch `feat/backend`. Implemented chunk 1: `backend/go.mod` (module
+`calculator-app/backend`) and `internal/calculator/` — seven operations, a name → operation map
+carrying each operation's arity, sentinel errors, and one shared `IsInf`/`IsNaN` result guard.
+`gofmt`/`go vet` clean, 100% coverage.
+
+### Prompt 4
+
+> Ok. Move to chunk 2
+
+Added `internal/handler/`. Request fields decode as `json.RawMessage` and are unmarshalled
+individually so "absent", "wrong type", and "out of range" produce different messages; operands go
+through `json.Number` + `strconv.ParseFloat` after verifying that unmarshalling `1e400` straight
+into a `float64` returns `+Inf` *and* an `UnmarshalTypeError`. Split `compute()` from the HTTP
+plumbing; added a `recover` that turns a panic into a JSON `500`. 100% coverage.
+
+### Prompt 5
+
+> Next chunk
+
+Chunk 3: `cmd/server/main.go` with hand-written path/method routing (JSON `404`/`405`, `Allow:
+POST`), `PORT` override, and explicit `http.Server` timeouts, plus `main_test.go`. Exported
+`handler.WriteError` so routing reuses the error wire format. Live smoke test on `PORT=8099`
+matched all eight documented responses.
+
+### Prompt 6
+
+> Next chunk
+
+Chunk 4: filled the README coverage placeholder (`internal/calculator` 100%, `internal/handler`
+100%, `cmd/server` 48% — only `main()` uncovered) and rewrote `DECISIONS.md` T6, which still
+described operands as `*float64`, correcting the claim that `1e400` "decodes to `+Inf`".
+
+### Prompt 7
+
+> Commit and push only chunk 1
+
+Staged only `backend/go.mod` and `internal/calculator/`, verified the package tests standalone,
+committed `ba56e45` and pushed with `-u` to `origin/feat/backend`.
+
+### Prompt 8
+
+> Now commit and push chunk 2
+
+Verified the handler builds and tests against the already-committed calculator alone, then
+committed `f248d76` and pushed. `WriteError`, which was written during chunk 3, went in here since
+it lives in the handler files.
+
+### Prompt 9
+
+> Commit and push chunk 3
+
+Ran `gofmt`, `go vet`, `go build`, and the full test suite, then committed `f771b95` and pushed.
+
+### Prompt 10
+
+> Commit and push chunk 4
+
+Reviewed both doc diffs, confirmed the README numbers still matched a live coverage run, committed
+`f1bdbd1` and pushed. Left `CLAUDE.md` and `PROMPTS.md` uncommitted as user-owned edits.
+
+### Prompt 11
+
+> log prompts and commit CLAUDE.md and PROMPTS.md
+
+Ran this skill to append Session 4, then committed `CLAUDE.md` and `PROMPTS.md`.
 
