@@ -158,16 +158,35 @@ export default function Calculator() {
           </select>
         </label>
 
+        {/*
+          type="text" rather than type="number", deliberately. A number input
+          applies the HTML spec's value sanitisation: anything that is not a
+          valid floating-point number is silently replaced with an empty string,
+          so "abc" and "1e400" never reach our validation at all — the user just
+          watches their typing disappear with no explanation. Holding the raw
+          string means the messages below can actually say what is wrong.
+          inputMode="decimal" keeps the numeric keypad on mobile, which is the
+          only thing worth having from type="number" here.
+        */}
         <label className="calculator__field" htmlFor="operand-a">
           Operand a
-          <input id="operand-a" type="number" value={a} onChange={handleAChange} />
+          <input
+            id="operand-a"
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            value={a}
+            onChange={handleAChange}
+          />
         </label>
 
         <label className="calculator__field" htmlFor="operand-b">
           Operand b
           <input
             id="operand-b"
-            type="number"
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
             value={b}
             onChange={handleBChange}
             // sqrt is unary. The field stays visible so the layout does not jump
