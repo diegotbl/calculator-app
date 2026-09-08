@@ -122,6 +122,72 @@ disagree, the backend wins.
 The decoder does not use `DisallowUnknownFields`. Extra keys in the payload are tolerated rather
 than rejected — lenient in what we accept. (Easy to tighten later if strictness is wanted.)
 
+### T11 — One calculation per submit, not live recalculation
+
+The UI is a form with an explicit **Calculate** button. It does not recompute as the user types.
+
+Recalculating on every keystroke would mean one HTTP request per character, which needs debouncing
+and out-of-order response handling to behave — machinery this app has no reason to carry. It also
+maps cleanly onto the API: one `POST /calculate` per calculation, which is what the endpoint is.
+
+### T12 — `sqrt`'s second operand is disabled, not hidden
+
+Selecting `sqrt` disables the `b` input rather than removing it. Hiding it would reflow the form
+every time the operation changed; disabling keeps the layout still while making the field plainly
+inert. `b` is omitted from the request entirely (B3), not sent as `0`.
+
+### T13 — Operand inputs are `type="text"` with `inputMode="decimal"`, not `type="number"`
+
+The obvious choice is `<input type="number">`. It is the wrong one here.
+
+A number input applies the HTML spec's *value sanitisation*: any value that is not a valid
+floating-point number is silently replaced with the empty string. So `abc` and `1e400` never reach
+our validation at all — the field simply goes blank and the user watches their typing vanish with
+no explanation. Two of the three messages in T14 would have been unreachable prose, and T9's claim
+that the frontend blocks non-numeric text would have been false.
+
+Holding the raw string lets the validation actually run and say what is wrong. `inputMode="decimal"`
+keeps the numeric keypad on mobile, which is the only thing worth having from `type="number"`; the
+spinner arrows, and their habit of changing the value on a stray scroll, are no loss.
+
+Found while writing the tests: the branches were provably dead, which is also why frontend coverage
+reaches 100% only after this change.
+
+### T14 — Client-side validation messages copy the backend's wording
+
+`operand "a" is required`, `operand "b" is required for operation "add"`, `must be a number`,
+`must be a finite number` — the frontend uses the backend's exact strings from § Error responses.
+
+The user should not be able to tell which layer rejected the input; the frontend is simply faster
+to say it. The backend still re-validates everything and wins any disagreement (T9). The cost is
+that the two lists must be kept in step, which is why both point at the same table here.
+
+### T15 — UI state is one discriminated union, not several booleans
+
+The status region is driven by a single value: `idle`, `loading`, `result`, or `error`. Separate
+`isLoading` / `error` / `result` fields would allow "loading while showing an error" and similar
+states that should not exist, and would need coordinated resets to avoid them. One value makes
+those combinations unrepresentable instead of merely avoided.
+
+### T16 — `api.ts` raises an error carrying the backend's message, not its status code
+
+`ApiError.message` holds the text the server sent, ready to display. The UI does not map status
+codes to its own copy, which would make the error spec a second source of truth alongside
+§ Error responses.
+
+The one message written on the client is for a failed connection, because there is no response to
+quote. `fetch` rejects only when the request never completed; an HTTP `400` is a *successful* fetch
+with `ok === false`. Those are handled separately — conflating them would report `division by zero`
+as a network outage.
+
+### T17 — The UI's operation list mirrors the backend map
+
+`src/operations.ts` holds the dropdown entries so `Calculator.tsx` does not hardcode the backend's
+vocabulary. It duplicates the `operations` map in `internal/calculator`, deliberately: the backend
+re-checks the operation name and arity on every request (T9), so drift between the two is a UI bug,
+never a correctness hole. Generating one from the other would need a schema endpoint or a build
+step, which is more machinery than seven fixed operations justify.
+
 ---
 
 ## Error responses
