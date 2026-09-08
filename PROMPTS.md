@@ -228,3 +228,31 @@ Created `TECHNICAL_DEBTS.md`: four open gaps (missing Vite proxy, leftover Vite 
 Node 20-era dependency pins, unfilled frontend coverage) and three deliberate omissions with their
 reasoning (no graceful shutdown, no request body size limit, `main()` left uncovered at 48%).
 
+---
+
+## Session 5 — 2026-09-08 — Vite dev proxy fix
+
+### Prompt 1
+
+> @TECHNICAL_DEBTS.md Let's fix the vite proxy issue. Plan.
+
+Read `vite.config.ts`, `DECISIONS.md`, and the README proxy references. Produced a plan to add a
+`server.proxy` entry for `/calculate` → `http://localhost:8080` (string shorthand, no rewrite / no
+`changeOrigin`), verify with a proxied `curl`, and move D1 to a resolved section. No files changed.
+
+### Prompt 2
+
+> yes, proceed
+
+Added the `server.proxy` block to `frontend/vite.config.ts`. Moved D1 in `TECHNICAL_DEBTS.md` from
+"Open gaps" to a new "Resolved" section. Verified: ran the Go backend + `npm run dev`, then
+`curl -X POST http://localhost:5173/calculate -d '{"operation":"multiply","a":6,"b":7}'` returned
+`{"result":42}`; `tsc` on `tsconfig.node.json` clean. Changes later stashed, then popped onto a new
+`fix/vite-dev-proxy` branch off the updated `master` (which now has the merged backend).
+
+### Prompt 3
+
+> Log prompts for this session. After that you may commit and push
+
+Ran this skill to append Session 5, then committed and pushed `fix/vite-dev-proxy`.
+
