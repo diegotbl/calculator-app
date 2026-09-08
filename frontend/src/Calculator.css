@@ -1,0 +1,129 @@
+/*
+  Styles for the Calculator component. Plain CSS, no framework — the app is one
+  form, and a utility library or CSS-in-JS runtime would be more setup than the
+  thing it styles.
+
+  Colour scheme follows index.css: dark is the base, and light is the override
+  under prefers-color-scheme. The custom properties are declared on .calculator
+  rather than :root so this file owns its own palette and cannot quietly restyle
+  anything else on the page.
+*/
+
+.calculator {
+  --surface: #1a1a1a;
+  --border: #3d444d;
+  --result: #3fb950;
+  --error: #f85149;
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 26rem;
+  margin-inline: auto;
+  padding: 2rem 1.5rem;
+  text-align: left;
+}
+
+@media (prefers-color-scheme: light) {
+  .calculator {
+    --surface: #f9f9f9;
+    --border: #d0d7de;
+    --result: #1a7f37;
+    --error: #cf222e;
+  }
+}
+
+.calculator *,
+.calculator *::before,
+.calculator *::after {
+  box-sizing: inherit;
+}
+
+.calculator h1 {
+  /* index.css sets h1 to 3.2em for the scaffold's splash page, which is far too
+     large above a form this size. */
+  font-size: 1.75rem;
+  line-height: 1.2;
+  margin: 0 0 1.5rem;
+}
+
+.calculator__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Each field is a <label> wrapping its own control, so the caption and the input
+   stack without needing a separate wrapper element. */
+.calculator__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.calculator__field select,
+.calculator__field input {
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  color: inherit;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background-color: var(--surface);
+}
+
+.calculator__field select:focus-visible,
+.calculator__field input:focus-visible {
+  outline: 2px solid #646cff;
+  outline-offset: 1px;
+}
+
+/* The second operand is disabled rather than hidden for sqrt, so it needs to
+   read as plainly inert instead of merely unfocused. */
+.calculator__field input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.calculator__form button {
+  margin-top: 0.5rem;
+  width: 100%;
+  border-color: var(--border);
+}
+
+.calculator__form button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* index.css gives every button a hover border; suppress it while submitting so a
+   disabled control does not look interactive. */
+.calculator__form button:disabled:hover {
+  border-color: var(--border);
+}
+
+.calculator__status {
+  /* Reserve a line even when empty, so the form does not shift downward the
+     first time a result or error appears. */
+  min-height: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+.calculator__result,
+.calculator__error {
+  margin: 0;
+  font-size: 1.1rem;
+  /* Long results and messages should wrap rather than widen the card. */
+  overflow-wrap: anywhere;
+}
+
+.calculator__result {
+  color: var(--result);
+  font-weight: 600;
+}
+
+.calculator__error {
+  color: var(--error);
+}

@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { ApiError, calculate } from './api'
 import type { CalcRequest, Operation } from './api'
 import { OPERATIONS, isUnary } from './operations'
+import './Calculator.css'
 
 /**
  * What the status region under the form is currently showing. The four states

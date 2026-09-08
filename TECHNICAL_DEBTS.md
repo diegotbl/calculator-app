@@ -7,8 +7,9 @@ Known gaps and shortcuts, recorded so they are visible in review rather than dis
 and deliberately left out. The second list matters as much as the first — it is the difference
 between "missed it" and "weighed it".
 
-Status as of the end of the backend implementation: the Go backend is complete and tested; the
-frontend is still Vite scaffolding.
+Status: the Go backend is complete and tested. The frontend is in progress — the API client,
+operation metadata, and the Calculator component are in place and wired up; tests and the README
+coverage summary are still outstanding.
 
 ---
 
@@ -36,6 +37,17 @@ gain for a take-home, and a failed upgrade costs more time than it saves.
 
 README § Coverage lists real backend numbers and `_to be filled in_` for the frontend. Resolves
 itself when the frontend tests exist; listed so it is not forgotten at submission time.
+
+### D5 — The favicon is still Vite's default logo
+
+`frontend/index.html` links `/vite.svg` as its icon, so the browser tab shows the Vite logo next
+to the app. The `<title>` beside it was part of the same scaffold leftover and has been corrected
+to "Calculator"; the icon has not.
+
+Fix: add an icon of our own and point the `<link rel="icon">` at it, or drop the tag and accept
+the browser default. Deferred because neither option affects anything the assignment asks about,
+and a Vite logo on a Vite app is more inert than wrong. Recorded rather than fixed so it reads as
+a decision instead of an oversight.
 
 ---
 
