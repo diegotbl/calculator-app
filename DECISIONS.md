@@ -74,11 +74,30 @@ URL (`/calculate`), which also works unchanged if both are served from one origi
 
 A fixed sensible default with an environment-variable escape hatch. No config file for one value.
 
-### T6 — Request operands are `*float64` (nullable), not `float64`
+### T6 — Request fields decode as `json.RawMessage`, operands then via `json.Number`
 
 A plain `float64` struct field defaults to `0`, so the handler cannot distinguish "client omitted
-`a`" from "client sent `a: 0`". A nil pointer means "absent" and is reported as a missing-operand
-error; a non-nil pointer to `0` is a valid operand.
+`a`" from "client sent `a: 0`". The obvious fix is `*float64` — nil means absent. But the error
+table below needs **three** outcomes per operand, and a `*float64` only gives two:
+
+| Client sent | Required message |
+| ----------- | ---------------- |
+| nothing, or `null` | `operand "a" is required` |
+| `"x"`, `true` | `operand "a" must be a number` |
+| `1e400` | `operand "a" must be a finite number` |
+
+So `request` holds each field as `json.RawMessage` (the undecoded bytes of that JSON value) and
+decodes them one at a time. Absent stays nil; a wrong-typed value fails its individual unmarshal;
+an out-of-range one is caught by the finite check.
+
+The last case needs one more step. Unmarshalling `1e400` straight into a `float64` returns *both*
+`+Inf` and an `UnmarshalTypeError`, so that path would report it as `must be a number` — the wrong
+message. Decoding into a `json.Number` (a string alias holding the literal) and calling
+`strconv.ParseFloat` ourselves gives `+Inf` with `ErrRange`, which the finite check turns into the
+right one.
+
+The same treatment on `operation` is what separates `operation must be a string` (sent `5`) from
+`operation is required` (sent nothing, `null`, or `""`).
 
 ### T7 — Operation dispatch is an explicit `map[string]func`
 
@@ -138,7 +157,7 @@ reaches it.
 | `operation` not one of the seven                                             | `400`  | `unknown operation "cube"`                     |
 | `a` missing (nil)                                                            | `400`  | `operand "a" is required`                      |
 | `b` missing for a binary operation                                           | `400`  | `operand "b" is required for operation "add"`  |
-| `a` or `b` is non-finite (`1e400` decodes to `+Inf`)                         | `400`  | `operand "a" must be a finite number`          |
+| `a` or `b` is outside the `float64` range (`1e400` parses to `±Inf`)         | `400`  | `operand "a" must be a finite number`          |
 
 ### Operation preconditions (`internal/calculator`, checked before computing)
 
