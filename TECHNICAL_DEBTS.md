@@ -49,6 +49,25 @@ the browser default. Deferred because neither option affects anything the assign
 and a Vite logo on a Vite app is more inert than wrong. Recorded rather than fixed so it reads as
 a decision instead of an oversight.
 
+### D6 — Selecting `sqrt` disables operand `b` but leaves its value on screen
+
+Found in manual testing. Given operand `b` holds a value, when `sqrt` is selected, `b` is disabled
+but still displays what was typed. The field reads as "this number is being used but you may not
+edit it", which is the opposite of what happens.
+
+Nothing incorrect is sent: `validate()` returns `{ operation, a }` for a unary operation, so `b`
+is omitted from the request regardless of what the box shows (DECISIONS.md B3). The defect is
+entirely in what the UI communicates.
+
+Fix: clear `b` in `handleOperationChange` when the newly selected operation is unary — roughly
+`if (isUnary(next)) setB('')` — plus a test asserting the field is both empty and disabled.
+
+One thing to settle first, which is why this is recorded rather than patched: clearing on the way
+in also means the value is gone on the way back out, so a user who picks `sqrt` by mistake and
+returns to `divide` has lost what they typed. The alternative is to keep `b` in state but render
+the disabled field as empty, which preserves the value without ever showing an inactive number.
+The second is friendlier and slightly more code; the first is two lines.
+
 ---
 
 ## Considered and deliberately not done
