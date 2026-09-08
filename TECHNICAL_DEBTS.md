@@ -14,22 +14,6 @@ frontend is still Vite scaffolding.
 
 ## Open gaps
 
-### D1 — The Vite dev proxy is documented but not configured
-
-**Severity: high — the documentation currently describes behavior that does not exist.**
-
-`frontend/vite.config.ts` has no `server.proxy` block, but two documents say it does:
-
-- DECISIONS.md **T4** gives the dev proxy as the reason the backend carries no CORS code.
-- README setup says the Vite dev server "proxies `/calculate` to :8080".
-
-So today the backend is reachable by `curl` but not from a browser on `:5173` — a request to
-`/calculate` would be served by Vite itself and 404. Nothing is broken in the backend; the
-integration piece the backend's design depends on was simply never added.
-
-Fix: a `server.proxy` entry in `vite.config.ts` mapping `/calculate` to `http://localhost:8080`.
-Small, but it must land before any frontend work can talk to the API.
-
 ### D2 — Vite scaffold placeholders are still in the repo
 
 `frontend/src/` still holds the generated demo app — `App.tsx`, `App.css`, `assets/react.svg` —
@@ -86,3 +70,13 @@ constructs the `http.Server` and blocks on `ListenAndServe`.
 be tested, and both are covered. Restructuring further (injecting a listener, running the server in
 a goroutine) to chase the number would add indirection to make a coverage report look better, which
 is the wrong trade. Also explained in README § Coverage.
+
+---
+
+## Resolved
+
+### D1 — The Vite dev proxy is documented but not configured *(fixed)*
+
+`frontend/vite.config.ts` now has a `server.proxy` entry mapping `/calculate` to
+`http://localhost:8080`, so a browser on `:5173` reaches the Go backend as a same-origin request —
+the integration piece DECISIONS.md T4 and the README setup section already described.

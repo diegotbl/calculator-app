@@ -5,6 +5,14 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      // Dev-only: forward the API call to the Go backend so the browser sees a
+      // same-origin request. Keeps CORS handling out of the backend (DECISIONS.md T4).
+      // String shorthand = same path, same method, body passed through unchanged.
+      '/calculate': 'http://localhost:8080',
+    },
+  },
   test: {
     // Simulate a browser DOM in Node so component tests can render React.
     environment: 'jsdom',
