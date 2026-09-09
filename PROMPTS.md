@@ -401,3 +401,40 @@ Moved D7 to Resolved in `TECHNICAL_DEBTS.md`; open gaps now D3 and D5.
 
 Ran this skill to append Session 7, then committed and pushed the branch.
 
+---
+
+## Session 8 — 2026-09-09 — D5: favicon
+
+### Prompt 1
+
+> Let's change the favicon. Walk me through
+
+Read `frontend/index.html` and `frontend/public/`. Explained that `public/` files are copied to
+the build root as-is, so the change is swap the file + repoint `<link rel="icon">`. Offered three
+options (emoji-as-SVG, hand-drawn SVG, `.ico`/PNG) and recommended the emoji SVG. No files changed.
+
+### Prompt 2
+
+> Okay. Since there is no calculator icon, let's use the Abacus one. Checkout to master, pull, and create a new branch. Then you can implement the favicon update.
+
+Checked out `master` and pulled (fast-forwarded to `2294aec`, picking up the merged D7
+`.gitattributes` work), branched `feat/favicon-abacus`. Added `frontend/public/abacus.svg` (🧮 in
+an SVG `<text>`, 100×100 viewBox), pointed `index.html` at `/abacus.svg`, and `git rm`'d
+`public/vite.svg` after confirming nothing else referenced it. `vite build` clean; `dist/` is
+gitignored.
+
+### Prompt 3
+
+> Add to gitattributes
+
+Added `*.svg text eol=lf` to `.gitattributes` under the `*.go` rule with a one-line comment.
+`git check-attr eol` then reports `lf` for `abacus.svg` and the CRLF warning is gone;
+`git add --renormalize .` found nothing else.
+
+### Prompt 4
+
+> Ok, tested and it's working. Log prompts, commit and push.
+
+Moved D5 to Resolved in `TECHNICAL_DEBTS.md` and updated the status line (only D3 open now). Ran
+this skill to append Session 8, then committed and pushed `feat/favicon-abacus`.
+

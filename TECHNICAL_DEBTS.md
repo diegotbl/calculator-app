@@ -7,9 +7,8 @@ Known gaps and shortcuts, recorded so they are visible in review rather than dis
 and deliberately left out. The second list matters as much as the first — it is the difference
 between "missed it" and "weighed it".
 
-Status: the Go backend and the React frontend are both implemented, tested and documented. Two
-gaps remain open — D3 and D5 — none of them blocking, and each recorded below with what it
-would take to close.
+Status: the Go backend and the React frontend are both implemented, tested and documented. One
+gap remains open — D3 — not blocking, and recorded below with what it would take to close.
 
 ---
 
@@ -23,17 +22,6 @@ those pins. Already noted in the README's toolchain note.
 
 Fix: bump to current majors and re-run the suite. Deferred because it is churn with no functional
 gain for a take-home, and a failed upgrade costs more time than it saves.
-
-### D5 — The favicon is still Vite's default logo
-
-`frontend/index.html` links `/vite.svg` as its icon, so the browser tab shows the Vite logo next
-to the app. The `<title>` beside it was part of the same scaffold leftover and has been corrected
-to "Calculator"; the icon has not.
-
-Fix: add an icon of our own and point the `<link rel="icon">` at it, or drop the tag and accept
-the browser default. Deferred because neither option affects anything the assignment asks about,
-and a Vite logo on a Vite app is more inert than wrong. Recorded rather than fixed so it reads as
-a decision instead of an oversight.
 
 ## Considered and deliberately not done
 
@@ -70,6 +58,14 @@ is the wrong trade. Also explained in README § Coverage.
 ---
 
 ## Resolved
+
+### D5 — The favicon was still Vite's default logo *(fixed)*
+
+`frontend/index.html` now links `/abacus.svg` — a small SVG in `frontend/public/` that renders the
+🧮 (abacus) emoji through an SVG `<text>` element, so there is no binary asset to maintain and it
+stays crisp at any tab size. `public/vite.svg` is deleted (nothing else referenced it). The
+`.gitattributes` rule was extended with `*.svg text eol=lf` so the new asset does not churn between
+Windows and CI checkouts, the same reason `*.go` is pinned (see D7).
 
 ### D7 — `gofmt -l` reported every Go file on Windows *(fixed)*
 
