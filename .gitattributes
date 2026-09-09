@@ -1,0 +1,3 @@
+# Go tooling (gofmt, go vet) expects LF line endings. Without this, Windows
+# checks these files out as CRLF and `gofmt -l` reports every file as misformatted.
+*.go text eol=lf

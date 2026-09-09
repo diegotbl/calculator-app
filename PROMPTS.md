@@ -381,3 +381,23 @@ Resolved in `TECHNICAL_DEBTS.md`, and updated the test count in README § Covera
 
 Ran this skill to append prompts 13 and 14.
 
+---
+
+## Session 7 — 2026-09-09 — D7: .gitattributes for Go line endings
+
+### Prompt 1
+
+> Let's deal with D7 now. Pull master, create a new branch and write .gitattributes
+
+Pulled `master` (now `969dc31`), branched `fix/gitattributes-go-eol`. Added a repo-root
+`.gitattributes` with `*.go text eol=lf`, re-checked-out the six `.go` files so the working copy is
+LF, and confirmed `git add --renormalize .` had nothing to change (blobs were already LF — the
+issue was only the Windows checkout). `gofmt -l .`, `go vet ./...` and `go test ./...` all clean.
+Moved D7 to Resolved in `TECHNICAL_DEBTS.md`; open gaps now D3 and D5.
+
+### Prompt 2
+
+> Ok, I retested manually to guarantee correctness. Log prompts, commit and push
+
+Ran this skill to append Session 7, then committed and pushed the branch.
+

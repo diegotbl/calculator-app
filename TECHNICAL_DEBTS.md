@@ -7,8 +7,8 @@ Known gaps and shortcuts, recorded so they are visible in review rather than dis
 and deliberately left out. The second list matters as much as the first — it is the difference
 between "missed it" and "weighed it".
 
-Status: the Go backend and the React frontend are both implemented, tested and documented. Three
-gaps remain open — D3, D5 and D7 — none of them blocking, and each recorded below with what it
+Status: the Go backend and the React frontend are both implemented, tested and documented. Two
+gaps remain open — D3 and D5 — none of them blocking, and each recorded below with what it
 would take to close.
 
 ---
@@ -34,26 +34,6 @@ Fix: add an icon of our own and point the `<link rel="icon">` at it, or drop the
 the browser default. Deferred because neither option affects anything the assignment asks about,
 and a Vite logo on a Vite app is more inert than wrong. Recorded rather than fixed so it reads as
 a decision instead of an oversight.
-
-### D7 — `gofmt -l` reports every Go file on Windows
-
-`gofmt -l ./...` in `backend/` lists all six `.go` files as needing formatting. They do not need it.
-Git stores them with LF endings and converts to CRLF on checkout (`core.autocrlf`), and `gofmt`
-treats a CRLF file as entirely misformatted — its diff replaces every line with an identical one.
-
-Verified by extracting the files from the git object store and running `gofmt -l` against that
-content: nothing is listed, so the committed code is correctly formatted.
-
-This matters because CLAUDE.md asks for `gofmt` before calling work done, and on this machine that
-check cries wolf — which either trains the reader to ignore it or invites a "fix" that rewrites
-every Go file.
-
-Fix: add a `.gitattributes` at the repo root with `*.go text eol=lf` so Go sources check out with
-LF on Windows too, then re-normalise once with `git add --renormalize .`. Left alone for now
-because it touches every Go file in the repo for a cosmetic tooling issue, which is a poor thing to
-bury in a frontend branch.
-
----
 
 ## Considered and deliberately not done
 
@@ -90,6 +70,18 @@ is the wrong trade. Also explained in README § Coverage.
 ---
 
 ## Resolved
+
+### D7 — `gofmt -l` reported every Go file on Windows *(fixed)*
+
+A `.gitattributes` at the repo root now sets `*.go text eol=lf`, so Go sources check out with LF
+even on Windows and no longer read as CRLF-misformatted. The six committed `.go` files were
+re-checked-out once under the new rule to normalise the working copy; `git add --renormalize .`
+found nothing to change, confirming the blobs were already stored LF — the problem was purely the
+Windows checkout. Verified: `gofmt -l .`, `go vet ./...` and `go test ./...` are all clean.
+
+The false alarm was worth verifying before acting: `gofmt -l` on the working copy still cried wolf,
+but extracting the files from the object store showed the committed code was correctly formatted,
+so the fix was a checkout-rule change rather than rewriting six files.
 
 ### D1 — The Vite dev proxy is documented but not configured *(fixed)*
 
