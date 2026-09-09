@@ -344,5 +344,40 @@ disclosed the `src/main.tsx` exclusion, and corrected the architecture diagram.
 Committed `d1ee621`. Added T11–T17 to `DECISIONS.md` — submit-per-calculation, disabled `b`,
 `type="text"`, message parity with the backend, the discriminated union, `ApiError` carrying a
 message, and the mirrored operation list — and moved D2 and D4 to Resolved in `TECHNICAL_DEBTS.md`.
-Ran this skill to append Session 6.
+Ran this skill to append Session 6. Final verification also turned up D7: `gofmt -l` flags all six
+Go files on Windows because git checks them out CRLF, which `gofmt` reads as wholly misformatted.
+Confirmed a false alarm by running `gofmt -l` against the files extracted from the git object store.
+
+### Prompt 11
+
+> Commit and push
+
+Committed `6f269da` and pushed, completing all nine planned chunks across seven commits on
+`feat/frontend`. Reported the branch summary and flagged what remains: D6 needs a decision rather
+than just a patch, D7's `.gitattributes` fix belongs on `master` since it touches every Go file, and
+the `type="text"` change is worth confirming in a real browser.
+
+### Prompt 12
+
+> log prompts
+
+Ran this skill to append prompts 11 and 12 and to add the D7 discovery to prompt 10's note, which
+had omitted it. Session 6 spans 2026-09-08 into 2026-09-09; the heading keeps its start date.
+
+### Prompt 13
+
+> Let's deal with the remaining technical debts.
+
+Asked which of D3/D5/D6/D7 to act on, since D3 and D5 were deliberate deferrals with no functional
+gain. For D6, offered clearing `b` on switch vs. keeping it in state and rendering the disabled
+field empty; user chose the latter. For D7, offered fixing now vs. leaving it for `master`; user
+chose to leave it. Implemented D6 in `Calculator.tsx` (`value={unary ? '' : b}`), added two
+regression tests to `Calculator.test.tsx` (33 tests total, coverage still 100%), moved D6 to
+Resolved in `TECHNICAL_DEBTS.md`, and updated the test count in README § Coverage.
+
+### Prompt 14
+
+> Ok, I tested manually. log prompts, then commit and push
+
+Ran this skill to append prompts 13 and 14.
 

@@ -128,7 +128,7 @@ Frontend — `cd frontend && npm run test:coverage`:
 | `src/operations.ts` | **100%** | **100%** | **100%** | **100%** |
 | `src/Calculator.tsx` | **100%** | **100%** | **100%** | **100%** |
 
-31 tests across `src/api.test.ts` (the client's response-to-result and
+33 tests across `src/api.test.ts` (the client's response-to-result and
 response-to-error mapping) and `src/Calculator.test.tsx` (rendering, input validation, and the
 result / error / loading states).
 

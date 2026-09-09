@@ -71,6 +71,30 @@ describe('Calculator', () => {
 
       expect(operandB()).toBeEnabled()
     })
+
+    // TECHNICAL_DEBTS.md D6: a disabled field displaying a value reads as "this
+    // number is being used but you may not edit it", the opposite of what
+    // happens — b is omitted from the request entirely for a unary operation.
+    it('is blanked, not just disabled, when sqrt is selected', async () => {
+      const user = userEvent.setup()
+      render(<Calculator />)
+
+      await user.type(operandB(), '42')
+      await user.selectOptions(operationSelect(), 'sqrt')
+
+      expect(operandB()).toHaveValue('')
+    })
+
+    it('restores the previously typed value when a binary operation is selected again', async () => {
+      const user = userEvent.setup()
+      render(<Calculator />)
+
+      await user.type(operandB(), '42')
+      await user.selectOptions(operationSelect(), 'sqrt')
+      await user.selectOptions(operationSelect(), 'divide')
+
+      expect(operandB()).toHaveValue('42')
+    })
   })
 
   describe('client-side validation', () => {

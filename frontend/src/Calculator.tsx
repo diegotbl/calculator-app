@@ -187,7 +187,13 @@ export default function Calculator() {
             type="text"
             inputMode="decimal"
             autoComplete="off"
-            value={b}
+            // b stays in state even while disabled (TECHNICAL_DEBTS.md D6), so a
+            // user who picks sqrt by mistake and switches back to a binary
+            // operation gets their value back. Only the displayed value is blanked
+            // while unary — showing a value next to a disabled field would read as
+            // "this number is being used", the opposite of what happens (b is
+            // omitted from the request entirely, DECISIONS.md B3).
+            value={unary ? '' : b}
             onChange={handleBChange}
             // sqrt is unary. The field stays visible so the layout does not jump
             // when the operation changes; disabling makes it plainly inert.

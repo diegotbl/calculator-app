@@ -7,8 +7,8 @@ Known gaps and shortcuts, recorded so they are visible in review rather than dis
 and deliberately left out. The second list matters as much as the first — it is the difference
 between "missed it" and "weighed it".
 
-Status: the Go backend and the React frontend are both implemented, tested and documented. Four
-gaps remain open — D3, D5, D6 and D7 — none of them blocking, and each recorded below with what it
+Status: the Go backend and the React frontend are both implemented, tested and documented. Three
+gaps remain open — D3, D5 and D7 — none of them blocking, and each recorded below with what it
 would take to close.
 
 ---
@@ -34,25 +34,6 @@ Fix: add an icon of our own and point the `<link rel="icon">` at it, or drop the
 the browser default. Deferred because neither option affects anything the assignment asks about,
 and a Vite logo on a Vite app is more inert than wrong. Recorded rather than fixed so it reads as
 a decision instead of an oversight.
-
-### D6 — Selecting `sqrt` disables operand `b` but leaves its value on screen
-
-Found in manual testing. Given operand `b` holds a value, when `sqrt` is selected, `b` is disabled
-but still displays what was typed. The field reads as "this number is being used but you may not
-edit it", which is the opposite of what happens.
-
-Nothing incorrect is sent: `validate()` returns `{ operation, a }` for a unary operation, so `b`
-is omitted from the request regardless of what the box shows (DECISIONS.md B3). The defect is
-entirely in what the UI communicates.
-
-Fix: clear `b` in `handleOperationChange` when the newly selected operation is unary — roughly
-`if (isUnary(next)) setB('')` — plus a test asserting the field is both empty and disabled.
-
-One thing to settle first, which is why this is recorded rather than patched: clearing on the way
-in also means the value is gone on the way back out, so a user who picks `sqrt` by mistake and
-returns to `divide` has lost what they typed. The alternative is to keep `b` in state but render
-the disabled field as empty, which preserves the value without ever showing an inactive number.
-The second is friendlier and slightly more code; the first is two lines.
 
 ### D7 — `gofmt -l` reports every Go file on Windows
 
@@ -132,3 +113,14 @@ README § Coverage now carries real frontend numbers: 31 tests across two files,
 branches, functions and lines for `api.ts`, `operations.ts` and `Calculator.tsx`. The table also
 states that `src/main.tsx` is excluded from the report, since a bare 100% without that disclosure
 would be misleading.
+
+### D6 — Selecting `sqrt` disables operand `b` but leaves its value on screen *(fixed)*
+
+`b` stays in component state even while disabled, so a user who picks `sqrt` by mistake and
+switches back to a binary operation gets their value back. Only the *displayed* value is blanked
+while the operation is unary (`value={unary ? '' : b}` in `Calculator.tsx`) — the field never shows
+an inactive number next to a "disabled" state, and nothing about the request changes: `validate()`
+already omitted `b` for unary operations regardless of what the box showed (DECISIONS.md B3).
+
+Chose this over clearing `b` on the way in, which was the two-line alternative — clearing would
+have lost the typed value for good on switching back, and preserving it costs one ternary.
