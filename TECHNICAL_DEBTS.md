@@ -7,21 +7,13 @@ Known gaps and shortcuts, recorded so they are visible in review rather than dis
 and deliberately left out. The second list matters as much as the first — it is the difference
 between "missed it" and "weighed it".
 
-Status as of the end of the backend implementation: the Go backend is complete and tested; the
-frontend is still Vite scaffolding.
+Status: the Go backend and the React frontend are both implemented, tested and documented. Three
+gaps remain open — D3, D5 and D7 — none of them blocking, and each recorded below with what it
+would take to close.
 
 ---
 
 ## Open gaps
-
-### D2 — Vite scaffold placeholders are still in the repo
-
-`frontend/src/` still holds the generated demo app — `App.tsx`, `App.css`, `assets/react.svg` —
-and `App.test.tsx`, which was written in session 1 only to prove the Vitest wiring worked. None of
-it is part of the calculator.
-
-Fix: delete them as `Calculator.tsx` and `Calculator.test.tsx` land. Leaving a throwaway smoke test
-in a submission invites the reviewer to read it as a real test.
 
 ### D3 — Frontend dependencies are pinned to the Node 20 era
 
@@ -32,10 +24,34 @@ those pins. Already noted in the README's toolchain note.
 Fix: bump to current majors and re-run the suite. Deferred because it is churn with no functional
 gain for a take-home, and a failed upgrade costs more time than it saves.
 
-### D4 — Frontend coverage is an unfilled placeholder
+### D5 — The favicon is still Vite's default logo
 
-README § Coverage lists real backend numbers and `_to be filled in_` for the frontend. Resolves
-itself when the frontend tests exist; listed so it is not forgotten at submission time.
+`frontend/index.html` links `/vite.svg` as its icon, so the browser tab shows the Vite logo next
+to the app. The `<title>` beside it was part of the same scaffold leftover and has been corrected
+to "Calculator"; the icon has not.
+
+Fix: add an icon of our own and point the `<link rel="icon">` at it, or drop the tag and accept
+the browser default. Deferred because neither option affects anything the assignment asks about,
+and a Vite logo on a Vite app is more inert than wrong. Recorded rather than fixed so it reads as
+a decision instead of an oversight.
+
+### D7 — `gofmt -l` reports every Go file on Windows
+
+`gofmt -l ./...` in `backend/` lists all six `.go` files as needing formatting. They do not need it.
+Git stores them with LF endings and converts to CRLF on checkout (`core.autocrlf`), and `gofmt`
+treats a CRLF file as entirely misformatted — its diff replaces every line with an identical one.
+
+Verified by extracting the files from the git object store and running `gofmt -l` against that
+content: nothing is listed, so the committed code is correctly formatted.
+
+This matters because CLAUDE.md asks for `gofmt` before calling work done, and on this machine that
+check cries wolf — which either trains the reader to ignore it or invites a "fix" that rewrites
+every Go file.
+
+Fix: add a `.gitattributes` at the repo root with `*.go text eol=lf` so Go sources check out with
+LF on Windows too, then re-normalise once with `git add --renormalize .`. Left alone for now
+because it touches every Go file in the repo for a cosmetic tooling issue, which is a poor thing to
+bury in a frontend branch.
 
 ---
 
@@ -80,3 +96,31 @@ is the wrong trade. Also explained in README § Coverage.
 `frontend/vite.config.ts` now has a `server.proxy` entry mapping `/calculate` to
 `http://localhost:8080`, so a browser on `:5173` reaches the Go backend as a same-origin request —
 the integration piece DECISIONS.md T4 and the README setup section already described.
+
+### D2 — Vite scaffold placeholders are still in the repo *(fixed)*
+
+`App.tsx`, `App.css`, `assets/react.svg` and `App.test.tsx` are deleted. They went out in the same
+commit as `Calculator.test.tsx` and `api.test.ts` deliberately: `App.test.tsx` was the only test
+file, so removing it alone would have left a commit where `npm test` exits 1 with "No test files
+found".
+
+`index.html`'s `<title>` was part of the same scaffold leftover and now reads "Calculator". The
+favicon is not — see D5.
+
+### D4 — Frontend coverage is an unfilled placeholder *(fixed)*
+
+README § Coverage now carries real frontend numbers: 31 tests across two files, 100% of statements,
+branches, functions and lines for `api.ts`, `operations.ts` and `Calculator.tsx`. The table also
+states that `src/main.tsx` is excluded from the report, since a bare 100% without that disclosure
+would be misleading.
+
+### D6 — Selecting `sqrt` disables operand `b` but leaves its value on screen *(fixed)*
+
+`b` stays in component state even while disabled, so a user who picks `sqrt` by mistake and
+switches back to a binary operation gets their value back. Only the *displayed* value is blanked
+while the operation is unary (`value={unary ? '' : b}` in `Calculator.tsx`) — the field never shows
+an inactive number next to a "disabled" state, and nothing about the request changes: `validate()`
+already omitted `b` for unary operations regardless of what the box showed (DECISIONS.md B3).
+
+Chose this over clearing `b` on the way in, which was the two-line alternative — clearing would
+have lost the typed value for good on switching back, and preserving it costs one ternary.

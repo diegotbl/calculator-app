@@ -41,14 +41,20 @@ Open the URL Vite prints. The frontend must reach the backend, so start the back
 
 ```
 frontend (React + TS, Vite)  ──POST /calculate──▶  backend (Go, net/http)
-        src/api.ts  ─ typed client                  ├── internal/handler     request parsing + validation
-        src/Calculator.tsx  ─ UI                     └── internal/calculator  pure operation logic
+  src/api.ts          typed client                   internal/handler     request parsing + validation
+  src/operations.ts   operations shown in the UI     internal/calculator  pure operation logic
+  src/Calculator.tsx  form, validation, rendering
 ```
 
 - **`internal/calculator`** knows nothing about HTTP: it takes `float64`s and returns
   `(float64, error)`. Each operation is unit-tested in isolation.
 - **`internal/handler`** owns JSON decoding, validation, status codes, and response shaping.
   Operations are dispatched through an explicit name → function map.
+- **`src/api.ts`** is the only place that speaks HTTP on the frontend. It turns a non-2xx response
+  into an error carrying the backend's own message, so the UI displays that message rather than
+  keeping a second copy of the error spec.
+- **`src/Calculator.tsx`** holds the form state and validates before sending. Its messages match
+  the backend's wording exactly, so the user cannot tell which layer rejected the input.
 - In development, `vite.config.ts` proxies `/calculate` to the backend so the browser sees a
   same-origin request and the backend needs no CORS code.
 
@@ -114,7 +120,21 @@ Backend — `cd backend && go test ./... -cover`:
 `ListenAndServe` — can't be exercised from a unit test. The logic that has branches, `router()`
 and `port()`, is fully covered by `cmd/server/main_test.go`.
 
-Frontend — _to be filled in once the frontend tests land._
+Frontend — `cd frontend && npm run test:coverage`:
+
+| File | Statements | Branches | Functions | Lines |
+| ---- | ---------- | -------- | --------- | ----- |
+| `src/api.ts` | **100%** | **100%** | **100%** | **100%** |
+| `src/operations.ts` | **100%** | **100%** | **100%** | **100%** |
+| `src/Calculator.tsx` | **100%** | **100%** | **100%** | **100%** |
+
+33 tests across `src/api.test.ts` (the client's response-to-result and
+response-to-error mapping) and `src/Calculator.test.tsx` (rendering, input validation, and the
+result / error / loading states).
+
+`src/main.tsx` is excluded from the report — see `test.coverage.exclude` in `vite.config.ts`. It
+only mounts the React root and has no branches, which is the same reason `main()` is uncovered on
+the Go side.
 
 ### Toolchain note
 

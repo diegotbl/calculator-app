@@ -15,6 +15,9 @@ node_modules/
 # Claude Code (personal, machine-local settings)
 .claude/settings.local.json
 
+# Personal scratch space
+/misc/
+
 # Editor / OS
 .DS_Store
 Thumbs.db

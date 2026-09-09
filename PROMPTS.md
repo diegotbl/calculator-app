@@ -256,3 +256,128 @@ Added the `server.proxy` block to `frontend/vite.config.ts`. Moved D1 in `TECHNI
 
 Ran this skill to append Session 5, then committed and pushed `fix/vite-dev-proxy`.
 
+---
+
+## Session 6 — 2026-09-08 — Frontend implementation
+
+### Prompt 1
+
+> Let's start with front-end development. Is there still any decision to be made before we start implementing? I know there are still 3 technical debts, but these will be resolved as we develop the front-end. Correct me if I'm wrong, but there is no decision to be made regarding these open gaps, right?
+
+Read `DECISIONS.md`, `TECHNICAL_DEBTS.md`, `README.md`, `package.json` and `vite.config.ts`.
+Confirmed D2/D3/D4 needed no decisions, and surfaced eight frontend questions not yet recorded
+anywhere — interaction model, `sqrt`'s second operand, input handling, state, `api.ts` shape, error
+display, styling, loading state — with a recommendation for each. No files changed.
+
+### Prompt 2
+
+> /plan Accept your recommendations. Plan implementation roadmap before implementing
+
+Wrote a nine-step roadmap covering `api.ts`, `operations.ts`, `Calculator.tsx`, `Calculator.css`,
+scaffold deletion, tests, README coverage, `DECISIONS.md` entries and this log. One follow-up
+question asked whether to trim `operations.ts` and `api.test.ts`; the answer kept both. No project
+files changed.
+
+### Prompt 3
+
+> Yes. Change model to Opus 5 before starting implementation. Create a new branch from master and implement plan as described, chunk by chunk, using auto mode. I'll review and commit each chunk before moving on to the next one.
+
+Created branch `feat/frontend` off `master`. Flagged that the model cannot be switched from inside
+the session — `/model opus` is the user's action.
+
+### Prompt 4
+
+> start with chunk 1
+
+Added `frontend/src/api.ts`: the `Operation` string-literal union, `CalcRequest` / `CalcResponse`
+interfaces mirroring the Go structs, an `ApiError` class carrying the backend's message, and
+`calculate()`. `tsc --noEmit` and `eslint` clean.
+
+### Prompt 5
+
+> commit and push
+
+Committed `80c3036`, pushing `feat/frontend` to the remote for the first time. Then chunk 2:
+`frontend/src/operations.ts`. Dropped the plan's per-entry `unary` flag, keeping only `isUnary()`,
+so the arity of `sqrt` has one source of truth rather than two that can disagree.
+
+### Prompt 6
+
+> commit and push. Move to chunk 3
+
+Committed `3b3492a`. Chunk 3: `frontend/src/Calculator.tsx` — a `Status` discriminated union for
+idle/loading/result/error, module-level `parseOperand` and `validate`, and a `role="status"` live
+region. The empty-string check runs before `Number()`, since `Number('')` is `0`, not `NaN`.
+
+### Prompt 7
+
+> I agree with these plan deviations. Commit and push. Next chunk.
+
+Committed `21c66bc`. Chunk 4: added `Calculator.css`, imported it, switched `main.tsx` to render
+`Calculator`, moved the orphaned `#root` rule into `index.css`, and retitled `index.html` to
+"Calculator". Verified with `npm run build` plus live `curl`s through the Vite proxy on `:5173`
+covering add, divide-by-zero and `sqrt` without `b`.
+
+### Prompt 8
+
+> Add the favicon update to @TECHNICAL_DEBTS.md. commit and push. Move to next chunk
+
+Added D5 (Vite favicon) and refreshed the status line; committed `707006d`. Chunks 5 and 6 were
+then merged after a follow-up question, because deleting `App.test.tsx` on its own would leave a
+commit where `npm test` exits 1 with "No test files found". Writing the tests exposed that
+`type="number"` silently blanks any non-numeric value, making two validation branches unreachable;
+a second question chose `type="text"` + `inputMode="decimal"`, which took frontend coverage to
+100%. Committed `8565957`.
+
+### Prompt 9
+
+> 1. After testing manually I found an issue. Consider the following test: Given operand b was set to some number; When operation sqrt is selected; Then operand b must be cleaned and set to inactive. Current behaviour is setting to inactive without cleaning the previous value. Add this to @TECHNICAL_DEBTS.md; 2. Since this chunk was already commited, move to next one.
+
+Recorded D6, noting the stale `b` is never actually sent because `validate()` omits it for unary
+operations. Chunk 7: filled in README § Coverage (31 tests, 100% across all four metrics),
+disclosed the `src/main.tsx` exclusion, and corrected the architecture diagram.
+
+### Prompt 10
+
+> Commit, push. Implement chunks 8 and 9 together
+
+Committed `d1ee621`. Added T11–T17 to `DECISIONS.md` — submit-per-calculation, disabled `b`,
+`type="text"`, message parity with the backend, the discriminated union, `ApiError` carrying a
+message, and the mirrored operation list — and moved D2 and D4 to Resolved in `TECHNICAL_DEBTS.md`.
+Ran this skill to append Session 6. Final verification also turned up D7: `gofmt -l` flags all six
+Go files on Windows because git checks them out CRLF, which `gofmt` reads as wholly misformatted.
+Confirmed a false alarm by running `gofmt -l` against the files extracted from the git object store.
+
+### Prompt 11
+
+> Commit and push
+
+Committed `6f269da` and pushed, completing all nine planned chunks across seven commits on
+`feat/frontend`. Reported the branch summary and flagged what remains: D6 needs a decision rather
+than just a patch, D7's `.gitattributes` fix belongs on `master` since it touches every Go file, and
+the `type="text"` change is worth confirming in a real browser.
+
+### Prompt 12
+
+> log prompts
+
+Ran this skill to append prompts 11 and 12 and to add the D7 discovery to prompt 10's note, which
+had omitted it. Session 6 spans 2026-09-08 into 2026-09-09; the heading keeps its start date.
+
+### Prompt 13
+
+> Let's deal with the remaining technical debts.
+
+Asked which of D3/D5/D6/D7 to act on, since D3 and D5 were deliberate deferrals with no functional
+gain. For D6, offered clearing `b` on switch vs. keeping it in state and rendering the disabled
+field empty; user chose the latter. For D7, offered fixing now vs. leaving it for `master`; user
+chose to leave it. Implemented D6 in `Calculator.tsx` (`value={unary ? '' : b}`), added two
+regression tests to `Calculator.test.tsx` (33 tests total, coverage still 100%), moved D6 to
+Resolved in `TECHNICAL_DEBTS.md`, and updated the test count in README § Coverage.
+
+### Prompt 14
+
+> Ok, I tested manually. log prompts, then commit and push
+
+Ran this skill to append prompts 13 and 14.
+
