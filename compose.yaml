@@ -1,0 +1,22 @@
+# Runs the whole app: `docker compose up --build`, then http://localhost:8080.
+#
+# Only the frontend publishes a port. The browser talks to nginx, which serves
+# the built React app and proxies /calculate to the backend over the internal
+# compose network -- one origin, so no CORS handling anywhere (DECISIONS.md T4).
+
+services:
+  backend:
+    build: ./backend
+    # Reachable as http://backend:8080 from the frontend container only; not
+    # published to the host.
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

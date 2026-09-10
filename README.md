@@ -20,7 +20,8 @@ For the reasoning behind the business rules, API shape, and error handling, see
 
 ## Setup
 
-Prerequisites: **Go 1.27+** and **Node 22 LTS**.
+Prerequisites: **Go 1.27+** and **Node 22 LTS**. To run the app without either, see
+[Run with Docker](#run-with-docker) below.
 
 Backend:
 
@@ -38,6 +39,41 @@ npm run dev                # Vite dev server on :5173, proxies /calculate to :80
 ```
 
 Open the URL Vite prints. The frontend must reach the backend, so start the backend first.
+
+## Run with Docker
+
+Requires only Docker (Desktop, or Engine with the Compose v2 plugin) — no Go and no Node on the
+host. From the repository root:
+
+```
+docker compose up --build      # builds both images and starts them
+```
+
+Then open **http://localhost:8080**. Stop with `Ctrl+C`, or from another terminal:
+
+```
+docker compose down
+```
+
+Two services, one published port:
+
+```
+browser ──▶ frontend (nginx, :8080) ─┬─ /           → the built React app
+                                     └─ /calculate  → backend (Go, :8080, internal only)
+```
+
+The frontend image builds `dist/` with Node and serves it from `nginx:alpine`; the backend image
+compiles a static binary and ships it `FROM scratch` (~6.6 MB, no shell or package manager
+inside). nginx reverse-proxies `/calculate` over the compose network, so the browser makes a
+same-origin request exactly as it does behind the Vite dev proxy — the same reason the backend
+needs no CORS code (see [DECISIONS.md T20](DECISIONS.md)).
+
+The backend publishes no host port: it is reachable only through the proxy. The API examples
+below therefore work unchanged against `localhost:8080` while the stack is up.
+
+> Port `8080` is the *whole app* here, while `go run ./cmd/server` uses `8080` for the API alone.
+> Stop a locally running backend first, or change the left side of the `ports` mapping in
+> `compose.yaml`.
 
 ## Architecture
 
@@ -108,6 +144,9 @@ error-response spec.
 
 - Dev cross-origin is handled by a Vite dev proxy, not backend CORS; the frontend calls the
   relative URL `/calculate`, which also works if both are served from one origin (`T4`).
+- Docker runs the two halves as two images behind an nginx reverse proxy rather than baking both
+  into one — the proxy reproduces the dev arrangement in production, so no application code
+  changes shape for deployment (`T20`).
 
 ## API
 

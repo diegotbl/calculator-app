@@ -1,0 +1,6 @@
+# Host artifacts: node_modules holds platform-specific binaries and dist/ and
+# coverage/ are regenerated inside the image.
+node_modules
+dist
+coverage
+*.log

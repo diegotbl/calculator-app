@@ -37,6 +37,7 @@ calculator-app/
     internal/calculator/      # pure operation logic (add, subtract, etc.) + unit tests
     internal/handler/         # HTTP handler, request/response structs, validation
     go.mod
+    Dockerfile                # multi-stage: golang build -> static binary on scratch
   frontend/
     src/
       api.ts                  # typed client for the backend API
@@ -45,6 +46,9 @@ calculator-app/
       test/setup.ts           # registers jest-dom matchers for Vitest
     vite.config.ts            # Vite config + Vitest `test` block (jsdom, coverage)
     package.json
+    Dockerfile                # multi-stage: node build -> dist served by nginx
+    nginx.conf                # static files + reverse proxy for /calculate
+  compose.yaml                # runs both together; app on :8080, backend internal only
   README.md
   PROMPTS.md                  # log of AI prompts used, per assignment instructions
 ```
@@ -89,6 +93,7 @@ calculator-app/
 - Frontend: `cd frontend && npm install && npm run dev` / `npm test` (`npm run test:coverage`
   for the coverage summary, `npm run test:watch` while developing)
 - Run a single frontend test: `cd frontend && npm test -- src/Calculator.test.tsx -t "validation"`
+- Whole app in Docker: `docker compose up --build` (http://localhost:8080) / `docker compose down`
 
 ## Working style
 
@@ -96,7 +101,8 @@ calculator-app/
   — a couple of sentences is enough, not an essay.
 - After any meaningful chunk of generated code, pause for me to review before continuing to the
   next piece, rather than generating the whole app in one pass.
-- Don't add Docker, CI config, or extra endpoints unless I ask — those are explicitly optional in
-  the assignment.
+- Don't add CI config or extra endpoints unless I ask — those are explicitly optional in the
+  assignment. (Docker was asked for and is done: see `compose.yaml` and DECISIONS.md T20. Keep it
+  to those files — no Kubernetes manifests, no registry pushes, no extra services.)
 - When you finish a feature, remind me to log the prompt(s) used in PROMPTS.md.
 - Don't commit or push when you're done implementing. Changes will be reviewed and user will explicitely asked for commits and pushes.

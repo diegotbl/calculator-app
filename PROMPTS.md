@@ -573,3 +573,58 @@ updated the D5 and D7 records in `TECHNICAL_DEBTS.md`, which quoted the old rule
 > log prompts; commit and push
 
 Appended these entries, then committed and pushed the `.gitattributes` change.
+
+## Session 11 — 2026-09-10 — Optional deliverable: Docker
+
+### Prompt 1
+
+> /plan Since we still have time, let's do the optional Docker part.
+
+Planned the last optional deliverable ("Dockerfile to run frontend + backend together"). Explored
+the repo, then asked which shape to use; chose two images behind an nginx reverse proxy over a
+single image with the Go server serving `dist/`, because the proxy reproduces the Vite dev-proxy
+arrangement (T4) and needs no application code changes.
+
+### Prompt 2
+
+> I'm getting the following error when I try to open docker: "Docker Desktop cannot start the server because access is denied. This usually happens when another user has already started Docker Desktop on the same machine.
+> open \.\pipe\dockerExtensionManagerAPI: Access is denied.". Are you holding something on your side that might be obstructing docker desktop's access?
+
+Diagnosed it as two generations of Docker Desktop processes in the user's own session (a 19:23 set
+still holding `\.\pipe\dockerExtensionManagerAPI`, a 19:27 set unable to claim it) with
+`com.docker.service` stopped — not a lock held by the CLI calls. The process-kill command was
+blocked by the permission classifier, so it was handed to the user to run. Meanwhile wrote
+`frontend/Dockerfile`, `frontend/nginx.conf` and `frontend/.dockerignore`.
+
+### Prompt 3
+
+> docker is up now, go ahead with compose.yaml
+
+Added `compose.yaml` (frontend publishes `8080:80`, backend `expose`d only), built both images and
+verified end to end: static assets, `/calculate` through the proxy, `400` on divide-by-zero, `405`
+on `GET`, `413` from the backend on a 1.2 MB body, and no host access to the backend. Replaced
+nginx's SPA fallback with `try_files $uri $uri/ =404` after `GET /nope` returned `200`,
+contradicting the documented 404. Images: backend 6.61 MB, frontend 69.1 MB.
+
+### Prompt 4
+
+> go on
+
+Documented the work: a "Run with Docker" section in `README.md`, `T20` in `DECISIONS.md` (two
+images vs. one, `scratch`/`CGO_ENABLED=0`, `client_max_body_size` above the backend's 1 MiB cap,
+404 over SPA fallback), and `N4` in `TECHNICAL_DEBTS.md` (no healthchecks, nginx master as root,
+no registry push).
+
+### Prompt 5
+
+> Update CLAUDE.md
+
+Added the Docker files to the project-structure tree, a `docker compose up --build` line under
+Commands, and rewrote the stale "Don't add Docker, CI config, or extra endpoints" bullet to
+exclude CI and extra endpoints while bounding Docker to the files that now exist.
+
+### Prompt 6
+
+> log prompts; commit and push
+
+Appended these entries, then committed and pushed the Docker deliverable.
