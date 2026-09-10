@@ -540,3 +540,21 @@ Amended and force-pushed the previous commit → `b4d1c92`.
 
 Ran this skill to append Session 9, then amended `b4d1c92` to include `PROMPTS.md`.
 
+---
+
+## Session 10 — 2026-09-10 — Go coverage report commands
+
+### Prompt 1
+
+> Add the commands in README.md for go coverage report
+
+Added a "detailed report" block to the Coverage section of `README.md`: `go test ./...
+-coverprofile=coverage.out` plus `go tool cover -func=` and `-html=`, with a note on what each
+renders. Verified both commands run (88.7% total statements) and that `coverage.out` is already
+gitignored.
+
+### Prompt 2
+
+> log the prompts; then commit and push
+
+Ran this skill to append Session 10, then committed and pushed the README change.

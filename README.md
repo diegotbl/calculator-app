@@ -185,7 +185,21 @@ cd frontend && npm run test:coverage # run + coverage summary
 
 ### Coverage
 
-Backend — `cd backend && go test ./... -cover`:
+Backend — `cd backend && go test ./... -cover` for the per-package summary. For a detailed
+report, write a coverage profile first and then render it:
+
+```
+cd backend
+go test ./... -coverprofile=coverage.out   # write the profile
+go tool cover -func=coverage.out           # per-function breakdown + total, in the terminal
+go tool cover -html=coverage.out           # annotated source, opens in a browser
+```
+
+`-func` prints one line per function plus an overall total (88.7% of statements); `-html` colours
+each line of source green (covered) or red (not covered), which is the quickest way to see *which*
+lines in `main()` are missed. `coverage.out` is a build artifact — it is gitignored.
+
+Per-package summary:
 
 | Package | Coverage |
 | ------- | -------- |
