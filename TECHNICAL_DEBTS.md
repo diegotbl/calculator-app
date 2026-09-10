@@ -37,6 +37,27 @@ For a stateless service whose longest request is a floating-point multiply, ther
 drain — no open transactions, no queued work, no external calls to finish. On a real service with a
 database this would be required; here it would be ceremony.
 
+### N4 — The compose stack has no healthchecks and nginx runs as root
+
+`compose.yaml` orders startup with `depends_on` and nothing more: no `healthcheck` blocks, no
+`condition: service_healthy`, no restart-until-ready loop.
+
+`depends_on` guarantees the backend container exists before nginx starts, which is all nginx
+actually needs — it resolves `backend` in `proxy_pass` at startup and would refuse to start if the
+name did not resolve. It does not wait for the Go server to be *listening*, but that server binds a
+port and nothing else; there is no migration, no connection pool, no warm-up. A healthcheck would
+be polling for an event that has already happened. On a stack with a database it would be
+required.
+
+The backend image also could not run one as written: `FROM scratch` has no shell and no `wget`, so
+a `CMD`-style healthcheck would need a purpose-built probe binary added to the image — real work to
+buy nothing here.
+
+Two related gaps, both deliberate: `nginx:alpine`'s master process runs as root (its workers drop
+to the `nginx` user), where `nginxinc/nginx-unprivileged` would avoid it; and the images are built
+locally by compose rather than tagged and pushed to a registry, since there is no deployment target
+to push to. The backend image does run as `nobody` (`USER 65534`).
+
 ### N3 — `main()` is not covered by tests
 
 `cmd/server` sits at 48% coverage. The uncovered statements are all inside `main()`, which

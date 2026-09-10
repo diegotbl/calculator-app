@@ -1,0 +1,6 @@
+# Build artifacts and test output from the host; the image builds its own.
+server
+*.exe
+*.test
+*.out
+coverage.out

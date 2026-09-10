@@ -214,6 +214,43 @@ No width breakpoints because there is no second layout to switch to — a calcul
 looks the same at every size. The only `@media` query is `prefers-color-scheme`, which is about
 theme, not width.
 
+### T20 — Containerisation: two images behind an nginx reverse proxy
+
+`docker compose up --build` serves the whole app on `http://localhost:8080`: an nginx image holds
+the built frontend and proxies `/calculate` to a Go image on the internal compose network. Only
+the frontend publishes a port; the API is reachable only through the proxy.
+
+This keeps the deployment shaped like development. `src/api.ts` requests the relative URL
+`/calculate`; in `npm run dev` Vite's `server.proxy` forwards it, in Docker nginx forwards it.
+Both are the same-origin arrangement T4 chose, so there is still no CORS code in the backend and
+no environment-specific API base URL in the frontend.
+
+The alternative was one image: a Node stage builds `dist/`, a Go stage builds the binary, and the
+Go server serves the static files itself for any path other than `/calculate`. It produces a
+single artifact and a single port, which is genuinely simpler to run. It was rejected because of
+what it costs to get there — `router()` grows a static-file branch, the binary needs either
+`go:embed` (which breaks a plain `go build` when `dist/` is absent) or a `STATIC_DIR` knob, and
+`cmd/server` gains behaviour and tests for a concern that belongs to deployment, not to the API.
+Serving files is also something nginx does better than `http.FileServer`. Splitting the two keeps
+the Go module exactly what T8 says it is.
+
+Three details worth noting:
+
+- The backend image is `FROM scratch`, which is possible because `CGO_ENABLED=0` produces a
+  statically linked binary. The result is ~6.6 MB and contains no shell, package manager or CA
+  bundle — nothing to exploit and nothing to patch. It also has no third-party modules to
+  download (T1), so the usual `go mod download` cache layer would download nothing and is left
+  out.
+- `client_max_body_size` on the proxied location is set to 2m, deliberately *above* the backend's
+  own 1 MiB cap (T18). nginx's default is also 1 MB, so without this an oversized body would be
+  refused at the proxy with an HTML error page instead of reaching the backend and returning the
+  documented `{"error":"request body too large"}`. The backend stays authoritative for its own
+  error spec, which is T9's principle applied to the edge.
+- nginx answers an unknown path with `404` rather than falling back to `index.html`. The SPA
+  fallback is the usual default, but this app has no client-side router, so a bad path really is
+  a missing file — and a `200` for every typo would contradict the documented "unknown path →
+  404".
+
 ---
 
 ## Error responses
