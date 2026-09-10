@@ -13,6 +13,8 @@ For the reasoning behind the business rules, API shape, and error handling, see
 - Extended: **power** (`a^b`), **square root** (`sqrt` of `a`), **percentage** (`a` percent of
   `b`, i.e. `(a / 100) * b`)
 - Input validation on both the client (immediate feedback) and the server (authoritative)
+- Responsive single-column layout with basic mobile support (fluid width, numeric keypad on
+  touch devices) — see [DECISIONS.md T19](DECISIONS.md)
 - Clear, human-readable error messages for invalid input and undefined results (division by
   zero, square root of a negative number, overflow)
 
@@ -81,6 +83,31 @@ Error (`4xx`):
 ```json
 { "error": "division by zero" }
 ```
+
+### Examples
+
+```
+# success
+$ curl -s -X POST localhost:8080/calculate \
+    -H 'Content-Type: application/json' \
+    -d '{"operation":"multiply","a":6,"b":7}'
+{"result":42}
+
+# unary operation — b omitted
+$ curl -s -X POST localhost:8080/calculate \
+    -H 'Content-Type: application/json' \
+    -d '{"operation":"sqrt","a":144}'
+{"result":12}
+
+# error — HTTP 400
+$ curl -s -X POST localhost:8080/calculate \
+    -H 'Content-Type: application/json' \
+    -d '{"operation":"divide","a":1,"b":0}'
+{"error":"division by zero"}
+```
+
+During development the same calls work against the Vite dev server on `localhost:5173`, which
+proxies `/calculate` to the backend.
 
 ### Error summary
 

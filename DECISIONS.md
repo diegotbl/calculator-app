@@ -200,6 +200,19 @@ connection to be closed rather than left half-drained. The check is a single lin
 configuration, so unlike graceful shutdown or a body-size *config knob* it earns its place even
 at this scope.
 
+### T19 — Responsive layout: one fluid column, no breakpoints
+
+The UI is a single stack of form controls, so "responsive" here means it stays usable from a
+~320px phone up to the desktop without a media query for width. The card is
+`width: 100%; max-width: 26rem` and centres itself, the controls are full-width block elements,
+and long results wrap (`overflow-wrap: anywhere`) instead of widening the card. `index.html`
+carries the `width=device-width` viewport meta, and the operand inputs use
+`inputMode="decimal"` so touch devices show the numeric keypad (T13).
+
+No width breakpoints because there is no second layout to switch to — a calculator this small
+looks the same at every size. The only `@media` query is `prefers-color-scheme`, which is about
+theme, not width.
+
 ---
 
 ## Error responses
