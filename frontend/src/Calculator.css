@@ -1,12 +1,7 @@
 /*
-  Styles for the Calculator component. Plain CSS, no framework — the app is one
-  form, and a utility library or CSS-in-JS runtime would be more setup than the
-  thing it styles.
-
-  Colour scheme follows index.css: dark is the base, and light is the override
-  under prefers-color-scheme. The custom properties are declared on .calculator
-  rather than :root so this file owns its own palette and cannot quietly restyle
-  anything else on the page.
+  Styles for the Calculator component. The palette lives in custom properties on
+  .calculator, not :root, so this file cannot restyle anything else on the page.
+  Dark is the base; light is the prefers-color-scheme override.
 */
 
 .calculator {
@@ -39,8 +34,6 @@
 }
 
 .calculator h1 {
-  /* index.css sets h1 to 3.2em for the scaffold's splash page, which is far too
-     large above a form this size. */
   font-size: 1.75rem;
   line-height: 1.2;
   margin: 0 0 1.5rem;
@@ -52,8 +45,7 @@
   gap: 1rem;
 }
 
-/* Each field is a <label> wrapping its own control, so the caption and the input
-   stack without needing a separate wrapper element. */
+/* Each field is a <label> wrapping its own control. */
 .calculator__field {
   display: flex;
   flex-direction: column;
@@ -80,8 +72,7 @@
   outline-offset: 1px;
 }
 
-/* The second operand is disabled rather than hidden for sqrt, so it needs to
-   read as plainly inert instead of merely unfocused. */
+/* sqrt disables operand b rather than hiding it, so it needs to read as inert. */
 .calculator__field input:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -98,15 +89,14 @@
   cursor: progress;
 }
 
-/* index.css gives every button a hover border; suppress it while submitting so a
-   disabled control does not look interactive. */
+/* Suppress the global button hover border while disabled. */
 .calculator__form button:disabled:hover {
   border-color: var(--border);
 }
 
 .calculator__status {
-  /* Reserve a line even when empty, so the form does not shift downward the
-     first time a result or error appears. */
+  /* Reserve a line even when empty, so the form does not shift when a result
+     first appears. */
   min-height: 1.5rem;
   margin-top: 1.25rem;
 }
@@ -115,7 +105,7 @@
 .calculator__error {
   margin: 0;
   font-size: 1.1rem;
-  /* Long results and messages should wrap rather than widen the card. */
+  /* Long results wrap rather than widen the card. */
   overflow-wrap: anywhere;
 }
 

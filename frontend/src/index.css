@@ -21,9 +21,8 @@ body {
   min-height: 100vh;
 }
 
-/* body centres its children vertically, but #root is a flex item and would
-   otherwise shrink to fit its contents, leaving nothing for the calculator's
-   `margin-inline: auto` to centre against. */
+/* #root is a flex item; without this it shrinks to its contents and the
+   calculator's margin-inline: auto has nothing to centre against. */
 #root {
   width: 100%;
 }

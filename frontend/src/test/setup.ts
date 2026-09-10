@@ -1,3 +1,2 @@
-// Registers jest-dom's custom matchers (toBeInTheDocument, toHaveTextContent, ...)
-// on Vitest's `expect`. Imported once via vite.config.ts `test.setupFiles`.
+// Registers jest-dom's matchers (toBeInTheDocument, ...) on Vitest's expect.
 import '@testing-library/jest-dom/vitest'

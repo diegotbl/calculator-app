@@ -7,18 +7,16 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // Dev-only: forward the API call to the Go backend so the browser sees a
-      // same-origin request. Keeps CORS handling out of the backend (DECISIONS.md T4).
-      // String shorthand = same path, same method, body passed through unchanged.
+      // Dev-only: forward the API call to the backend so the browser sees a
+      // same-origin request and the backend needs no CORS handling.
       '/calculate': 'http://localhost:8080',
     },
   },
   test: {
-    // Simulate a browser DOM in Node so component tests can render React.
+    // A browser-like DOM in Node so component tests can render React.
     environment: 'jsdom',
-    // Allow describe/it/expect without importing them in every test file.
+    // describe/it/expect without importing them in every file.
     globals: true,
-    // Runs once before the suite: registers jest-dom's custom matchers.
     setupFiles: './src/test/setup.ts',
     css: true,
     coverage: {

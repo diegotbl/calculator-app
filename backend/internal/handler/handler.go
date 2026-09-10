@@ -1,7 +1,6 @@
 // Package handler owns the HTTP side of the calculator: decoding the JSON
 // request, validating it, dispatching to the calculator package, and shaping the
-// JSON response. The exact status codes and messages are specified in
-// DECISIONS.md § Error responses; this file implements that table.
+// JSON response.
 package handler
 
 import (
@@ -18,15 +17,13 @@ import (
 )
 
 // maxBodyBytes caps the request body. A calculation payload is a few dozen
-// bytes; 1 MiB is far more than any legitimate request needs and keeps a
+// bytes; 1 MiB is far more than any legitimate request needs and stops a
 // deliberately huge body from being read into memory before it is rejected.
 const maxBodyBytes = 1 << 20
 
-// request is decoded in two stages. The fields are json.RawMessage (the raw
-// bytes of each JSON value, decoded later) rather than string/float64 so we can
-// tell "field absent" from "field present but the wrong type" and return the
-// specific message the spec asks for — e.g. `operation must be a string` vs
-// `operation is required`.
+// request holds each field as raw JSON, decoded one at a time later, so the
+// handler can tell an absent field from one sent with the wrong type and return
+// the specific message for each ("operation is required" vs "must be a string").
 type request struct {
 	Operation json.RawMessage `json:"operation"`
 	A         json.RawMessage `json:"a"`
@@ -41,9 +38,7 @@ type errorResponse struct {
 	Error string `json:"error"`
 }
 
-// apiError is a validation failure carrying the HTTP status and client-facing
-// message to send. It implements error so it can flow through normal return
-// values.
+// apiError is a validation failure carrying the HTTP status and message to send.
 type apiError struct {
 	status  int
 	message string
@@ -56,19 +51,17 @@ func badRequest(format string, args ...any) *apiError {
 }
 
 // Calculate handles POST /calculate. Routing (path and method) is done in
-// cmd/server; by the time we get here the request is a POST to the right path.
+// cmd/server.
 func Calculate(w http.ResponseWriter, r *http.Request) {
-	// Defence in depth: an unexpected panic becomes a 500 with a JSON body
-	// rather than a dropped connection (DECISIONS.md § Error responses).
+	// An unexpected panic becomes a JSON 500 rather than a dropped connection.
 	defer func() {
 		if p := recover(); p != nil {
 			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
 		}
 	}()
 
-	// Cap the body before anything reads it. Once the limit is passed, the next
-	// Read on r.Body returns an *http.MaxBytesError, which compute turns into a
-	// 413.
+	// Once the body passes maxBodyBytes, the next read on it returns an
+	// *http.MaxBytesError, which compute turns into a 413.
 	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
 
 	result, apiErr := compute(r.Body)
@@ -79,9 +72,8 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, successResponse{Result: result})
 }
 
-// compute does the decode → validate → calculate pipeline. It is separated from
-// the HTTP plumbing so the ordering of checks (which the spec pins down) is easy
-// to read top to bottom.
+// compute runs the decode → validate → calculate pipeline. The checks are
+// ordered so the response to any given bad request is predictable.
 func compute(body io.Reader) (float64, *apiError) {
 	raw, err := io.ReadAll(body)
 	if err != nil {
@@ -108,7 +100,7 @@ func compute(body io.Reader) (float64, *apiError) {
 		return 0, badRequest("unknown operation %q", op)
 	}
 
-	// Presence checks first (spec order), then value checks.
+	// Presence before value, so "b is required" wins over "b must be a number".
 	if absent(req.A) {
 		return 0, badRequest(`operand "a" is required`)
 	}
@@ -131,15 +123,13 @@ func compute(body io.Reader) (float64, *apiError) {
 
 	result, err := calculator.Calculate(op, a, b)
 	if err != nil {
-		// Every calculator error (divide by zero, sqrt of negative, non-finite
-		// result) is a client error, not a server fault — DECISIONS.md B4/B5.
+		// A request with no defined answer is the client's mistake, not a server fault.
 		return 0, badRequest("%s", err.Error())
 	}
 	return result, nil
 }
 
-// absent reports whether a raw JSON value was omitted or sent explicitly as
-// null. Both mean "no value" for our purposes.
+// absent reports whether a raw JSON value was omitted or sent as null.
 func absent(raw json.RawMessage) bool {
 	return len(bytes.TrimSpace(raw)) == 0 || string(bytes.TrimSpace(raw)) == "null"
 }
@@ -158,9 +148,11 @@ func parseOperation(raw json.RawMessage) (string, *apiError) {
 	return op, nil
 }
 
-// parseOperand decodes one operand. A non-number JSON value (`"x"`, true) is
-// `must be a number`; a numeric literal outside the float64 range (1e400) parses
-// to ±Inf and is `must be a finite number` — two distinct messages per the spec.
+// parseOperand decodes one operand. Decoding via json.Number keeps two error
+// cases distinct: a non-number value ("x", true) is "must be a number", while a
+// literal outside the float64 range (1e400 parses to ±Inf) is "must be a finite
+// number" — unmarshalling 1e400 straight into a float64 would report it as the
+// former.
 func parseOperand(raw json.RawMessage, name string) (float64, *apiError) {
 	var num json.Number
 	if err := json.Unmarshal(raw, &num); err != nil {
@@ -173,9 +165,8 @@ func parseOperand(raw json.RawMessage, name string) (float64, *apiError) {
 	return f, nil
 }
 
-// WriteError writes an error in the API's wire format, {"error": "..."}. It is
-// exported so the routing layer in cmd/server can return its 404/405 in exactly
-// the same shape as every other error — the wire format is defined once, here.
+// WriteError writes an error in the API's wire format, {"error": "..."}. Exported
+// so cmd/server returns its 404/405 in the same shape as every other error.
 func WriteError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, errorResponse{Error: message})
 }
@@ -183,8 +174,5 @@ func WriteError(w http.ResponseWriter, status int, message string) {
 func writeJSON(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	// A trailing newline is conventional for JSON API responses and keeps
-	// curl output tidy. An encode error here is unrecoverable (headers are
-	// already sent), so there is nothing useful to do with it.
 	_ = json.NewEncoder(w).Encode(body)
 }
