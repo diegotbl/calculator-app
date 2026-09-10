@@ -1,8 +1,9 @@
 # Decisions
 
 Business and technical decisions for the calculator app, with the reasoning behind each so it can
-be explained in code review / interview follow-ups. README.md carries only a short summary and
-points here for detail.
+be explained in code review / interview follow-ups. README.md § "Design decisions & assumptions"
+carries a one-line summary of each point and refers here by ID (`B2`, `T7`, …); this file is the
+detail, including the alternatives that were weighed.
 
 ---
 

@@ -60,6 +60,55 @@ frontend (React + TS, Vite)  ──POST /calculate──▶  backend (Go, net/ht
 - In development, `vite.config.ts` proxies `/calculate` to the backend so the browser sees a
   same-origin request and the backend needs no CORS code.
 
+## Design decisions & assumptions
+
+The summary below is enough to review the shape of the solution; every point is expanded, with
+the alternatives that were weighed, in [DECISIONS.md](DECISIONS.md) (referenced by ID, e.g.
+`T7`). That file is the single source of truth for the business rules and the full
+error-response spec.
+
+**Assumptions**
+
+- `percentage` means "*a* percent of *b*" → `(a / 100) * b`, e.g. `percentage(15, 200) = 30`
+  (`B2`).
+- `sqrt` is the only unary operation; sending `b` with it is silently ignored, not an error
+  (`B3`).
+- A mathematically undefined or out-of-range request (÷0, √negative, overflow to `±Inf`/`NaN`)
+  is the *client's* mistake → `400`, never `500` (`B4`, `B5`).
+- No auth, rate limiting, persistence, or multi-tenancy is in scope — it is a stateless
+  compute endpoint (`T3`).
+
+**Backend**
+
+- Go standard library only — `net/http` + `encoding/json`; one endpoint doing arithmetic does
+  not need a framework (`T1`).
+- Two packages: `internal/calculator` is pure `float64 → (float64, error)` with no HTTP
+  knowledge; `internal/handler` owns decoding, validation, status codes, JSON (`T8`).
+- Operation dispatch is an explicit `map[string]func`, not a registry or reflection (`T7`).
+- Request fields decode as `json.RawMessage`, then operands via `json.Number`, so the handler
+  can tell "absent" from "wrong type" from "not finite" and return the right message for each
+  (`T6`).
+- Request body capped at 1 MiB via `http.MaxBytesReader` → `413` (`T18`).
+
+**Frontend**
+
+- Validation runs on both sides; the backend re-checks everything and wins any disagreement.
+  The client copies the backend's exact error wording so the user cannot tell which layer
+  rejected the input (`T9`, `T14`).
+- One explicit **Calculate** button — no recalculation per keystroke, which would need
+  debouncing and out-of-order handling (`T11`).
+- Operand fields are `type="text"` + `inputMode="decimal"`, not `type="number"`, whose value
+  sanitisation would swallow invalid input before validation could explain it (`T13`).
+- Status region is one discriminated union (`idle | loading | result | error`), so impossible
+  combinations like "loading while showing an error" are unrepresentable (`T15`).
+- `api.ts` surfaces the backend's message rather than mapping status codes to its own copy
+  (`T16`).
+
+**Integration**
+
+- Dev cross-origin is handled by a Vite dev proxy, not backend CORS; the frontend calls the
+  relative URL `/calculate`, which also works if both are served from one origin (`T4`).
+
 ## API
 
 Single endpoint: `POST /calculate`
