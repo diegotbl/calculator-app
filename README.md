@@ -88,6 +88,7 @@ Error (`4xx`):
 | ------ | ---- | -------- |
 | `404`  | Unknown path | anything other than `/calculate` |
 | `405`  | Wrong method | `GET /calculate` (response sets `Allow: POST`) |
+| `413`  | Body too large | request body over 1 MiB |
 | `400`  | Malformed request | empty body, invalid JSON, operand that isn't a number |
 | `400`  | Invalid input | missing `operation`, unknown operation, missing operand, non-finite operand |
 | `400`  | Undefined / out-of-range result | division by zero, `sqrt` of a negative number, overflow to `±Inf`/`NaN` |

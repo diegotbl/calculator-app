@@ -36,15 +36,6 @@ For a stateless service whose longest request is a floating-point multiply, ther
 drain — no open transactions, no queued work, no external calls to finish. On a real service with a
 database this would be required; here it would be ceremony.
 
-### N2 — No request body size limit
-
-The handler reads the whole body with `io.ReadAll` and no `http.MaxBytesReader` cap, so a
-deliberately huge payload is read into memory before being rejected as invalid JSON.
-
-The server's `ReadTimeout` bounds how long that can go on, and nothing in the spec calls for a
-limit. On anything internet-facing, `http.MaxBytesReader` with a few KB would be the standard
-guard, and it is a one-line addition if wanted.
-
 ### N3 — `main()` is not covered by tests
 
 `cmd/server` sits at 48% coverage. The uncovered statements are all inside `main()`, which
@@ -58,6 +49,15 @@ is the wrong trade. Also explained in README § Coverage.
 ---
 
 ## Resolved
+
+### D8 — No request body size limit *(fixed)*
+
+`internal/handler` now wraps `r.Body` in `http.MaxBytesReader` with a 1 MiB cap before reading
+it. A body past the limit is refused with `413 request body too large` rather than being read
+into memory and then failing as invalid JSON. One line in `Calculate`, one branch in `compute`
+to turn the resulting `*http.MaxBytesError` into the `413`, and one handler test. Was N2 in the
+"deliberately not done" list; promoted because the guard is idiomatic (`net/http` ships it),
+costs almost nothing, and the question came up in review. See DECISIONS.md T18.
 
 ### D5 — The favicon was still Vite's default logo *(fixed)*
 

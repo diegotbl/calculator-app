@@ -7,6 +7,7 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -15,6 +16,11 @@ import (
 
 	"calculator-app/backend/internal/calculator"
 )
+
+// maxBodyBytes caps the request body. A calculation payload is a few dozen
+// bytes; 1 MiB is far more than any legitimate request needs and keeps a
+// deliberately huge body from being read into memory before it is rejected.
+const maxBodyBytes = 1 << 20
 
 // request is decoded in two stages. The fields are json.RawMessage (the raw
 // bytes of each JSON value, decoded later) rather than string/float64 so we can
@@ -60,6 +66,11 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	// Cap the body before anything reads it. Once the limit is passed, the next
+	// Read on r.Body returns an *http.MaxBytesError, which compute turns into a
+	// 413.
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
+
 	result, apiErr := compute(r.Body)
 	if apiErr != nil {
 		writeJSON(w, apiErr.status, errorResponse{Error: apiErr.Error()})
@@ -74,6 +85,10 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 func compute(body io.Reader) (float64, *apiError) {
 	raw, err := io.ReadAll(body)
 	if err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			return 0, &apiError{status: http.StatusRequestEntityTooLarge, message: "request body too large"}
+		}
 		return 0, badRequest("invalid JSON in request body")
 	}
 	if len(bytes.TrimSpace(raw)) == 0 {

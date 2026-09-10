@@ -118,6 +118,28 @@ func TestCalculateErrors(t *testing.T) {
 	}
 }
 
+// A body past the 1 MiB cap is rejected as 413 before it is fully read, rather
+// than being buffered into memory and then failing as invalid JSON.
+func TestCalculateBodyTooLarge(t *testing.T) {
+	// Valid JSON prefix followed by more than 1 MiB of digits, so the request is
+	// rejected for its size, not its syntax.
+	body := `{"operation":"add","a":1,"b":` + strings.Repeat("1", (1<<20)+1) + `}`
+	rec := post(t, body)
+
+	if rec.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusRequestEntityTooLarge)
+	}
+	var resp struct {
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decoding response %s: %v", rec.Body.String(), err)
+	}
+	if resp.Error != "request body too large" {
+		t.Errorf("error = %q, want %q", resp.Error, "request body too large")
+	}
+}
+
 // WriteError is what cmd/server uses for its 404/405, so the routing layer's
 // errors come out in the same wire format as the handler's own.
 func TestWriteError(t *testing.T) {
