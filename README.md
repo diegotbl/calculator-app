@@ -218,3 +218,8 @@ the Go side.
 Built and tested on Node 22 LTS (managed via [nvm-windows](https://github.com/coreybutler/nvm-windows)).
 The frontend was initially scaffolded under Node 20.10, so `vite` 5 / `vitest` 2 / `jsdom` 25 are
 still pinned to that era; they can be bumped to current majors now that Node 22 is in use.
+
+`npm audit` flags advisories in this pinned `vite` / `vitest` toolchain; `npm audit --omit=dev`
+reports none. They are all `devDependency`-only dev-server / test-runner issues with no effect on
+the built output or the runtime dependencies. See
+[TECHNICAL_DEBTS.md D3](TECHNICAL_DEBTS.md).

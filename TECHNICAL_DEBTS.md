@@ -3,30 +3,31 @@
 Known gaps and shortcuts, recorded so they are visible in review rather than discovered in it.
 
 [DECISIONS.md](DECISIONS.md) records what was decided and why. This file records what is
-**not done**, split into two kinds: gaps that should be closed, and omissions that were considered
-and deliberately left out. The second list matters as much as the first — it is the difference
-between "missed it" and "weighed it".
+**not done** and why it was left that way — the difference between "missed it" and "weighed it".
 
-Status: the Go backend and the React frontend are both implemented, tested and documented. One
-gap remains open — D3 — not blocking, and recorded below with what it would take to close.
+Status: the Go backend and the React frontend are both implemented, tested and documented. No
+gaps remain open; the items below were considered and deliberately left as they are, each weighed
+against CLAUDE.md's instruction not to introduce machinery this project's scope does not need.
 
 ---
 
-## Open gaps
-
-### D3 — Frontend dependencies are pinned to the Node 20 era
-
-The frontend was scaffolded under Node 20.10, so `vite` 5, `vitest` 2, `jsdom` 25, and React 18 are
-pinned to that generation. The project now runs on Node 22, which lifts the constraint that forced
-those pins. Already noted in the README's toolchain note.
-
-Fix: bump to current majors and re-run the suite. Deferred because it is churn with no functional
-gain for a take-home, and a failed upgrade costs more time than it saves.
-
 ## Considered and deliberately not done
 
-These are not oversights. Each was weighed against CLAUDE.md's instruction not to introduce
-machinery this project's scope does not need.
+### D3 — Frontend toolchain stays on the versions Vite scaffolded
+
+`vite` 5, `vitest` 2 and `jsdom` 25 are the versions `npm create vite` produced. They are left
+as-is rather than bumped to current majors.
+
+The upgrade is a breaking change (`vite` 8, `vitest` 5) with no functional gain for a calculator
+this size, and a scaffold's pinned toolchain is not where a take-home's remaining hours are best
+spent. All three versions run cleanly on the Node 22 LTS the project is built with.
+
+`npm audit` reports 6 advisories (2 critical, 1 high, 3 moderate), all inside this toolchain —
+`vite`, `vitest`, `esbuild`, `@vitest/*`. `npm audit --omit=dev` reports **0**: every advisory is
+in a `devDependency`, and each one is a local dev-server or test-runner attack surface (a
+malicious page reaching `localhost:5173`, the Vitest UI server, dev-server path traversal) with
+nothing exposed in the built `dist/` output or the runtime dependencies (`react`, `react-dom`).
+The `vite` 8 / `vitest` 5 bump clears all six if it is ever wanted.
 
 ### N1 — No graceful shutdown
 

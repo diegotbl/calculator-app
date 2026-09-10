@@ -438,3 +438,105 @@ Added `*.svg text eol=lf` to `.gitattributes` under the `*.go` rule with a one-l
 Moved D5 to Resolved in `TECHNICAL_DEBTS.md` and updated the status line (only D3 open now). Ran
 this skill to append Session 8, then committed and pushed `feat/favicon-abacus`.
 
+---
+
+## Session 9 — 2026-09-10 — Pre-submission review, cleanup, comment trim
+
+### Prompt 1
+
+> Back end and front end have been implemented and the application is working well. analyze the project and try to find anything we should fix before I submit this assignment.
+
+Reviewed the whole project (`go vet`, `gofmt -l`, `go test ./... -cover`, `npm test`,
+`npm run lint`, `npm run build` — all clean). Reported five issues: the stale Vite-template
+`frontend/README.md`, ESLint linting the generated `coverage/` directory, a "31 vs 33 tests"
+drift in `TECHNICAL_DEBTS.md`, dead Vite-scaffold rules in `src/index.css`, and the unguarded
+request body size (N2).
+
+### Prompt 2
+
+> Create a new branch for these issues
+
+Checked out `master`, fetched, and created `chore/pre-submission-cleanup`, rebasing it onto the
+latest `origin/master` (favicon PR #5 already merged there).
+
+### Prompt 3
+
+> /plan let's fix all the 5 issues you mentioned
+
+Entered plan mode. Asked two questions — `413` vs `400` for an oversized body (chose `413`), and
+how far to trim `index.css` (dead rules only) — wrote the plan to the plan file, approved.
+
+### Prompt 4
+
+> Go
+
+Implemented the body-size chunk: `maxBodyBytes` (1 MiB) and `http.MaxBytesReader` in
+`internal/handler`, oversized body → `413 request body too large`, plus a handler test.
+Documented as `DECISIONS.md` T18, a new error-table row, a `README.md` error-summary row, and
+N2 → D8 in `TECHNICAL_DEBTS.md`. Verified both suites and the `413` via `curl`.
+
+### Prompt 5
+
+> Commit and push
+
+Split the five fixes into commits `44c0e6a` (frontend/README stub), `a09a112` (eslint ignore
+`coverage`), `6568932` (D4 count 31→33), `76d0742` (drop dead `index.css` anchor rules),
+`47d94cc` (body cap). Rewrote one messy intermediate commit before pushing the branch.
+
+### Prompt 6
+
+> Read @../misc/ASSIGNEMENT_INSTRUCTIONS.md and see if we missed anything
+
+Checked the assignment brief against the repo. Found two documentation gaps — no runnable `curl`
+API examples in the README, and responsive/mobile support implemented but never stated — plus a
+note that this session still needed logging in `PROMPTS.md`.
+
+### Prompt 7
+
+> yes, do #1 and #2
+
+Added a `### Examples` block to README § API (three `curl` calls, output verified against a
+running server) and documented the responsive layout in README Features + `DECISIONS.md` T19.
+Commit `aefc3cb`.
+
+### Prompt 8
+
+> According to the @misc/ASSIGNMENT_INSTRUCTIONS.md, "Design decisions or assumptions" should be included in README.md. Should we move what's in @DECISIONS.md to the readme file? At least a summary of the decisions, referencing @DECISIONS.md ?
+
+Recommended not moving the full file. Added a "Design decisions & assumptions" section to
+`README.md` — a one-line-per-point summary (assumptions plus backend/frontend/integration
+decisions) that references `DECISIONS.md` by ID; updated the `DECISIONS.md` intro to match.
+Commit `9d01e0a`.
+
+### Prompt 9
+
+> Now let's remove the unnecessary comments from the project. Comments should only be used when necessary to explain some business logic or important implementation decision. Don't reference codes from the docs, like "D1", "B1", "N1", etc. When needed state the business rule in the inline comment. Keep comments clean and simple.
+
+Trimmed comments across all Go and TS/TSX/CSS source and tests: removed narration, TypeScript
+idiom explanations, and every `DECISIONS.md` / `B#` / `T#` / `D#` cross-reference, keeping only
+business rules and non-obvious implementation notes in plain language. Comments only, no code
+change (confirmed with a filtered diff); ~150 net lines removed. Commit `e4d3949`.
+
+### Prompt 10
+
+> Perfect. Now run npm audit and let's see if we have any issues
+
+Ran `npm audit`: 6 advisories (2 critical, 1 high, 3 moderate), all in the `vite` / `vitest` /
+`esbuild` / `@vitest/*` dev toolchain; `npm audit --omit=dev` reports 0. Documented the status
+under `TECHNICAL_DEBTS.md` D3 and the README toolchain note rather than forcing the breaking
+`vite` 8 / `vitest` 5 upgrade. Commit `9a170c9`.
+
+### Prompt 11
+
+> D3 is still listed as an open gap, but we have deliberately not done. Update @TECHNICAL_DEBTS.md accordingly and ammend last commit
+
+Moved D3 from "Open gaps" to "Considered and deliberately not done" in `TECHNICAL_DEBTS.md`,
+reframed it as a deliberate choice, and updated the status line to "no gaps remain open".
+Amended and force-pushed the previous commit → `b4d1c92`.
+
+### Prompt 12
+
+> log prompts and ammend last commit to include the prompts
+
+Ran this skill to append Session 9, then amended `b4d1c92` to include `PROMPTS.md`.
+
