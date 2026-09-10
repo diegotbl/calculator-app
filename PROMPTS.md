@@ -540,3 +540,36 @@ Amended and force-pushed the previous commit → `b4d1c92`.
 
 Ran this skill to append Session 9, then amended `b4d1c92` to include `PROMPTS.md`.
 
+---
+
+## Session 10 — 2026-09-10 — Go coverage report commands
+
+### Prompt 1
+
+> Add the commands in README.md for go coverage report
+
+Added a "detailed report" block to the Coverage section of `README.md`: `go test ./...
+-coverprofile=coverage.out` plus `go tool cover -func=` and `-html=`, with a note on what each
+renders. Verified both commands run (88.7% total statements) and that `coverage.out` is already
+gitignored.
+
+### Prompt 2
+
+> log the prompts; then commit and push
+
+Ran this skill to append Session 10, then committed and pushed the README change.
+
+### Prompt 3
+
+> Add what is needed in .gitattributes to solve the CRLF/LF issue
+
+Replaced the two extension-specific rules (`*.go`, `*.svg`) with one repo-wide
+`* text=auto eol=lf`, so every text file is LF in both the repo and the working tree. Normalised
+the 14 CRLF working-tree files to LF (`git add --renormalize .` confirmed zero content change) and
+updated the D5 and D7 records in `TECHNICAL_DEBTS.md`, which quoted the old rules.
+
+### Prompt 4
+
+> log prompts; commit and push
+
+Appended these entries, then committed and pushed the `.gitattributes` change.

@@ -1,6 +1,13 @@
-# Go tooling (gofmt, go vet) expects LF line endings. Without this, Windows
-# checks these files out as CRLF and `gofmt -l` reports every file as misformatted.
-*.go text eol=lf
-
-# Keep SVG assets LF so they don't churn between Windows and CI checkouts.
-*.svg text eol=lf
+# This repo stores and checks out LF everywhere.
+#
+# Without a rule, a Windows checkout (core.autocrlf=true) writes CRLF into the
+# working tree while the tools that generate files -- Go, npm, Vite -- write LF.
+# A file can then end up with mixed endings, and appending to one produces a
+# whole-file diff. Pinning eol=lf keeps the working tree matching the LF blobs
+# git already stores.
+#
+# It also keeps gofmt honest: it reads a CRLF .go file as wholly misformatted
+# and flags every Go source in the repo (see TECHNICAL_DEBTS.md D7).
+#
+# text=auto still lets git detect binary files and leave them untouched.
+* text=auto eol=lf
