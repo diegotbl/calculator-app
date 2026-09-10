@@ -65,16 +65,22 @@ costs almost nothing, and the question came up in review. See DECISIONS.md T18.
 `frontend/index.html` now links `/abacus.svg` — a small SVG in `frontend/public/` that renders the
 🧮 (abacus) emoji through an SVG `<text>` element, so there is no binary asset to maintain and it
 stays crisp at any tab size. `public/vite.svg` is deleted (nothing else referenced it). The
-`.gitattributes` rule was extended with `*.svg text eol=lf` so the new asset does not churn between
-Windows and CI checkouts, the same reason `*.go` is pinned (see D7).
+repo-wide `.gitattributes` LF rule covers the new asset too, so it does not churn between Windows
+and CI checkouts (see D7).
 
 ### D7 — `gofmt -l` reported every Go file on Windows *(fixed)*
 
-A `.gitattributes` at the repo root now sets `*.go text eol=lf`, so Go sources check out with LF
-even on Windows and no longer read as CRLF-misformatted. The six committed `.go` files were
-re-checked-out once under the new rule to normalise the working copy; `git add --renormalize .`
-found nothing to change, confirming the blobs were already stored LF — the problem was purely the
-Windows checkout. Verified: `gofmt -l .`, `go vet ./...` and `go test ./...` are all clean.
+A `.gitattributes` at the repo root now sets `* text=auto eol=lf`, so every text file checks out
+with LF even on Windows and Go sources no longer read as CRLF-misformatted. The six committed
+`.go` files were re-checked-out once under the new rule to normalise the working copy;
+`git add --renormalize .` found nothing to change, confirming the blobs were already stored LF —
+the problem was purely the Windows checkout. Verified: `gofmt -l .`, `go vet ./...` and
+`go test ./...` are all clean.
+
+The rule started as `*.go` (plus `*.svg` for D5) and was later widened to every text file. The
+narrow version left Markdown ungoverned, so `PROMPTS.md` sat CRLF in the working tree while
+generated files were LF; appending LF lines to it produced a mixed-ending file. One rule for the
+whole repo removes the class of problem rather than the instances.
 
 The false alarm was worth verifying before acting: `gofmt -l` on the working copy still cried wolf,
 but extracting the files from the object store showed the committed code was correctly formatted,

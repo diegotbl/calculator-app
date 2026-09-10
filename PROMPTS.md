@@ -558,3 +558,18 @@ gitignored.
 > log the prompts; then commit and push
 
 Ran this skill to append Session 10, then committed and pushed the README change.
+
+### Prompt 3
+
+> Add what is needed in .gitattributes to solve the CRLF/LF issue
+
+Replaced the two extension-specific rules (`*.go`, `*.svg`) with one repo-wide
+`* text=auto eol=lf`, so every text file is LF in both the repo and the working tree. Normalised
+the 14 CRLF working-tree files to LF (`git add --renormalize .` confirmed zero content change) and
+updated the D5 and D7 records in `TECHNICAL_DEBTS.md`, which quoted the old rules.
+
+### Prompt 4
+
+> log prompts; commit and push
+
+Appended these entries, then committed and pushed the `.gitattributes` change.
