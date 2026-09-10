@@ -97,7 +97,7 @@ favicon is not — see D5.
 
 ### D4 — Frontend coverage is an unfilled placeholder *(fixed)*
 
-README § Coverage now carries real frontend numbers: 31 tests across two files, 100% of statements,
+README § Coverage now carries real frontend numbers: 33 tests across two files, 100% of statements,
 branches, functions and lines for `api.ts`, `operations.ts` and `Calculator.tsx`. The table also
 states that `src/main.tsx` is excluded from the report, since a bare 100% without that disclosure
 would be misleading.
