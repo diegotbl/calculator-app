@@ -1,5 +1,4 @@
-// Black-box tests (package calculator_test): they exercise the package through
-// its exported API only, the same way the handler package uses it.
+// Black-box tests: the package is exercised through its exported API only.
 package calculator_test
 
 import (
@@ -35,14 +34,14 @@ func TestCalculate(t *testing.T) {
 		{"percentage", "percentage", 15, 200, 30, nil},
 		{"percentage of zero", "percentage", 50, 0, 0, nil},
 
-		// Mathematically undefined requests → error (DECISIONS.md B4).
+		// Requests with no defined answer.
 		{"divide by zero", "divide", 1, 0, 0, calculator.ErrDivideByZero},
 		{"sqrt of negative", "sqrt", -4, 0, 0, calculator.ErrSqrtNegative},
 
 		// Unknown operation.
 		{"unknown operation", "cube", 2, 0, 0, calculator.ErrUnknownOperation},
 
-		// Non-finite results → error (DECISIONS.md B5).
+		// Non-finite results.
 		{"multiply overflow to +Inf", "multiply", 1e308, 10, 0, calculator.ErrNotFinite},
 		{"add overflow to +Inf", "add", 1e308, 1e308, 0, calculator.ErrNotFinite},
 		{"power overflow to +Inf", "power", 10, 400, 0, calculator.ErrNotFinite},

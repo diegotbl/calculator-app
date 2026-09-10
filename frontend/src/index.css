@@ -13,15 +13,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 body {
   margin: 0;
   display: flex;
@@ -30,9 +21,8 @@ body {
   min-height: 100vh;
 }
 
-/* body centres its children vertically, but #root is a flex item and would
-   otherwise shrink to fit its contents, leaving nothing for the calculator's
-   `margin-inline: auto` to centre against. */
+/* #root is a flex item; without this it shrinks to its contents and the
+   calculator's margin-inline: auto has nothing to centre against. */
 #root {
   width: 100%;
 }
@@ -65,9 +55,6 @@ button:focus-visible {
   :root {
     color: #213547;
     background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
   }
   button {
     background-color: #f9f9f9;

@@ -1,8 +1,9 @@
 # Decisions
 
 Business and technical decisions for the calculator app, with the reasoning behind each so it can
-be explained in code review / interview follow-ups. README.md carries only a short summary and
-points here for detail.
+be explained in code review / interview follow-ups. README.md § "Design decisions & assumptions"
+carries a one-line summary of each point and refers here by ID (`B2`, `T7`, …); this file is the
+detail, including the alternatives that were weighed.
 
 ---
 
@@ -188,16 +189,42 @@ re-checks the operation name and arity on every request (T9), so drift between t
 never a correctness hole. Generating one from the other would need a schema endpoint or a build
 step, which is more machinery than seven fixed operations justify.
 
+### T18 — Request body is capped at 1 MiB
+
+The handler wraps `r.Body` in `http.MaxBytesReader` before reading it, so a deliberately huge
+payload is refused (`413`, `request body too large`) instead of being read into memory and then
+rejected as invalid JSON. A real calculation payload is a few dozen bytes; 1 MiB is a generous
+ceiling that no legitimate client approaches.
+
+`net/http`'s `MaxBytesReader` is the idiomatic guard for this — it also arranges for the
+connection to be closed rather than left half-drained. The check is a single line and needs no
+configuration, so unlike graceful shutdown or a body-size *config knob* it earns its place even
+at this scope.
+
+### T19 — Responsive layout: one fluid column, no breakpoints
+
+The UI is a single stack of form controls, so "responsive" here means it stays usable from a
+~320px phone up to the desktop without a media query for width. The card is
+`width: 100%; max-width: 26rem` and centres itself, the controls are full-width block elements,
+and long results wrap (`overflow-wrap: anywhere`) instead of widening the card. `index.html`
+carries the `width=device-width` viewport meta, and the operand inputs use
+`inputMode="decimal"` so touch devices show the numeric keypad (T13).
+
+No width breakpoints because there is no second layout to switch to — a calculator this small
+looks the same at every size. The only `@media` query is `prefers-color-scheme`, which is about
+theme, not width.
+
 ---
 
 ## Error responses
 
 Wire format: every error is `{"error": "<message>"}` as JSON. Success is `{"result": <number>}`.
 
-Only routing errors deviate from HTTP `400`. A malformed or unanswerable request from the client
-is a `400`, never a `500` (see B4). `500` is reachable only via an unexpected panic, which a
-`recover` in the handler converts to `{"error": "internal server error"}` — no documented input
-reaches it.
+Almost every client error is a `400`. The exceptions: routing answers a bad path or method with
+`404` / `405`, and a request body over 1 MiB is `413` (see T18). A malformed or unanswerable
+request from the client is otherwise always a `400`, never a `500` (see B4). `500` is reachable
+only via an unexpected panic, which a `recover` in the handler converts to
+`{"error": "internal server error"}` — no documented input reaches it.
 
 ### Routing layer (`cmd/server/main.go`)
 
@@ -210,6 +237,7 @@ reaches it.
 
 | Condition                                             | Status | Message                          |
 | ---------------------------------------------------- | ------ | -------------------------------- |
+| Body larger than 1 MiB                               | `413`  | `request body too large`         |
 | Empty body                                           | `400`  | `request body is empty`          |
 | Malformed JSON (syntax error)                        | `400`  | `invalid JSON in request body`   |
 | Wrong JSON type for an operand (`"a": "x"`, `true`)  | `400`  | `operand "a" must be a number`   |

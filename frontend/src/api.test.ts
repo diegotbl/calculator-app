@@ -1,7 +1,7 @@
 import { ApiError, calculate } from './api'
 
-// fetch is replaced wholesale: these tests are about how api.ts maps a response
-// onto a result or an ApiError, not about the network.
+// These tests are about how api.ts maps a response onto a result or an
+// ApiError, so fetch is replaced wholesale.
 const mockFetch = vi.fn()
 beforeEach(() => {
   mockFetch.mockReset()
@@ -34,8 +34,7 @@ describe('calculate', () => {
 
     await calculate({ operation: 'sqrt', a: 9 })
 
-    // JSON.stringify drops an undefined property, so "b" never reaches the wire
-    // (DECISIONS.md B3).
+    // JSON.stringify drops an undefined property, so b never reaches the wire.
     expect(mockFetch.mock.calls[0][1].body).toBe('{"operation":"sqrt","a":9}')
   })
 
@@ -47,8 +46,7 @@ describe('calculate', () => {
     })
   })
 
-  // The messages below are the backend's own, passed through untouched — the
-  // point of ApiError carrying a message rather than a status code.
+  // The messages below are the backend's own, passed through untouched.
   it.each([
     { status: 400, error: 'division by zero' },
     { status: 400, error: 'square root of a negative number is undefined' },
@@ -80,8 +78,8 @@ describe('calculate', () => {
   })
 
   it('reports a failed connection as a network error, not a calculation error', async () => {
-    // fetch rejects only when the request never completed. This is the case that
-    // must not be confused with an HTTP 400.
+    // fetch rejects only when the request never completed — not to be confused
+    // with an HTTP 400.
     mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))
 
     await expect(calculate({ operation: 'add', a: 2, b: 3 })).rejects.toThrow(

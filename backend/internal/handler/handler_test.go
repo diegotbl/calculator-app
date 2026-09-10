@@ -69,7 +69,7 @@ func TestCalculateErrors(t *testing.T) {
 		wantStatus int
 		wantError  string
 	}{
-		// Decoding (DECISIONS.md § Request decoding).
+		// Decoding.
 		{"empty body", ``, http.StatusBadRequest, "request body is empty"},
 		{"whitespace-only body", "  \n ", http.StatusBadRequest, "request body is empty"},
 		{"malformed JSON", `{"operation":`, http.StatusBadRequest, "invalid JSON in request body"},
@@ -77,7 +77,7 @@ func TestCalculateErrors(t *testing.T) {
 		{"operand a is a string", `{"operation":"add","a":"x","b":2}`, http.StatusBadRequest, `operand "a" must be a number`},
 		{"operand b is a bool", `{"operation":"add","a":1,"b":true}`, http.StatusBadRequest, `operand "b" must be a number`},
 
-		// Semantic validation, in spec order.
+		// Semantic validation, in the order the handler checks.
 		{"operation missing", `{"a":1,"b":2}`, http.StatusBadRequest, "operation is required"},
 		{"operation empty", `{"operation":"","a":1,"b":2}`, http.StatusBadRequest, "operation is required"},
 		{"operation null", `{"operation":null,"a":1,"b":2}`, http.StatusBadRequest, "operation is required"},
@@ -89,8 +89,8 @@ func TestCalculateErrors(t *testing.T) {
 		{"operand a out of float64 range", `{"operation":"add","a":1e400,"b":1}`, http.StatusBadRequest, `operand "a" must be a finite number`},
 		{"operand b out of float64 range", `{"operation":"add","a":1,"b":-1e400}`, http.StatusBadRequest, `operand "b" must be a finite number`},
 
-		// Operation preconditions and the non-finite result guard, surfaced
-		// from the calculator package as 400s (DECISIONS.md B4/B5).
+		// Undefined answers and non-finite results, surfaced from the
+		// calculator package as 400s.
 		{"division by zero", `{"operation":"divide","a":1,"b":0}`, http.StatusBadRequest, "division by zero"},
 		{"sqrt of a negative", `{"operation":"sqrt","a":-4}`, http.StatusBadRequest, "square root of a negative number is undefined"},
 		{"overflow to +Inf", `{"operation":"multiply","a":1e308,"b":10}`, http.StatusBadRequest, "result is not a finite number"},
@@ -115,6 +115,28 @@ func TestCalculateErrors(t *testing.T) {
 				t.Errorf("error = %q, want %q", body.Error, tt.wantError)
 			}
 		})
+	}
+}
+
+// A body past the 1 MiB cap is rejected as 413 before it is fully read, rather
+// than being buffered into memory and then failing as invalid JSON.
+func TestCalculateBodyTooLarge(t *testing.T) {
+	// Valid JSON prefix followed by more than 1 MiB of digits, so the request is
+	// rejected for its size, not its syntax.
+	body := `{"operation":"add","a":1,"b":` + strings.Repeat("1", (1<<20)+1) + `}`
+	rec := post(t, body)
+
+	if rec.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusRequestEntityTooLarge)
+	}
+	var resp struct {
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decoding response %s: %v", rec.Body.String(), err)
+	}
+	if resp.Error != "request body too large" {
+		t.Errorf("error = %q, want %q", resp.Error, "request body too large")
 	}
 }
 

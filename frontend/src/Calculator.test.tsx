@@ -3,10 +3,8 @@ import userEvent from '@testing-library/user-event'
 import Calculator from './Calculator'
 import { ApiError, calculate } from './api'
 
-// Only `calculate` is replaced. importOriginal keeps the real ApiError class, so
-// the component's `error instanceof ApiError` check behaves exactly as it does in
-// production — a hand-written stub class would pass the test while the real app
-// fell through to the generic message.
+// Only `calculate` is replaced; importOriginal keeps the real ApiError class so
+// the component's `error instanceof ApiError` check behaves as in production.
 vi.mock('./api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./api')>()),
   calculate: vi.fn(),
@@ -38,7 +36,7 @@ describe('Calculator', () => {
   it('renders every operation the backend supports', () => {
     render(<Calculator />)
 
-    // Mirrors the operations map in internal/calculator/calculator.go.
+    // Must match the backend's operation list.
     expect(
       screen.getAllByRole('option').map((option) => option.getAttribute('value')),
     ).toEqual([
@@ -72,9 +70,8 @@ describe('Calculator', () => {
       expect(operandB()).toBeEnabled()
     })
 
-    // TECHNICAL_DEBTS.md D6: a disabled field displaying a value reads as "this
-    // number is being used but you may not edit it", the opposite of what
-    // happens — b is omitted from the request entirely for a unary operation.
+    // A value next to a disabled field would read as "in use"; b is omitted from
+    // the request entirely for a unary operation.
     it('is blanked, not just disabled, when sqrt is selected', async () => {
       const user = userEvent.setup()
       render(<Calculator />)
@@ -98,8 +95,8 @@ describe('Calculator', () => {
   })
 
   describe('client-side validation', () => {
-    // Messages are copied from the backend's spec (DECISIONS.md § Error
-    // responses) so the user cannot tell which layer rejected the input.
+    // Messages copy the backend's wording so the user cannot tell which layer
+    // rejected the input.
     it.each([
       {
         name: 'a is empty',
@@ -155,7 +152,7 @@ describe('Calculator', () => {
       await submit(user, { operation: 'sqrt', a: '9' })
 
       expect(await screen.findByText('Result: 3')).toBeInTheDocument()
-      // b is omitted entirely rather than sent as 0 (DECISIONS.md B3).
+      // b is omitted entirely rather than sent as 0.
       expect(mockCalculate).toHaveBeenCalledWith({ operation: 'sqrt', a: 9 })
     })
   })

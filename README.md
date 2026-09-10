@@ -13,6 +13,8 @@ For the reasoning behind the business rules, API shape, and error handling, see
 - Extended: **power** (`a^b`), **square root** (`sqrt` of `a`), **percentage** (`a` percent of
   `b`, i.e. `(a / 100) * b`)
 - Input validation on both the client (immediate feedback) and the server (authoritative)
+- Responsive single-column layout with basic mobile support (fluid width, numeric keypad on
+  touch devices) — see [DECISIONS.md T19](DECISIONS.md)
 - Clear, human-readable error messages for invalid input and undefined results (division by
   zero, square root of a negative number, overflow)
 
@@ -58,6 +60,55 @@ frontend (React + TS, Vite)  ──POST /calculate──▶  backend (Go, net/ht
 - In development, `vite.config.ts` proxies `/calculate` to the backend so the browser sees a
   same-origin request and the backend needs no CORS code.
 
+## Design decisions & assumptions
+
+The summary below is enough to review the shape of the solution; every point is expanded, with
+the alternatives that were weighed, in [DECISIONS.md](DECISIONS.md) (referenced by ID, e.g.
+`T7`). That file is the single source of truth for the business rules and the full
+error-response spec.
+
+**Assumptions**
+
+- `percentage` means "*a* percent of *b*" → `(a / 100) * b`, e.g. `percentage(15, 200) = 30`
+  (`B2`).
+- `sqrt` is the only unary operation; sending `b` with it is silently ignored, not an error
+  (`B3`).
+- A mathematically undefined or out-of-range request (÷0, √negative, overflow to `±Inf`/`NaN`)
+  is the *client's* mistake → `400`, never `500` (`B4`, `B5`).
+- No auth, rate limiting, persistence, or multi-tenancy is in scope — it is a stateless
+  compute endpoint (`T3`).
+
+**Backend**
+
+- Go standard library only — `net/http` + `encoding/json`; one endpoint doing arithmetic does
+  not need a framework (`T1`).
+- Two packages: `internal/calculator` is pure `float64 → (float64, error)` with no HTTP
+  knowledge; `internal/handler` owns decoding, validation, status codes, JSON (`T8`).
+- Operation dispatch is an explicit `map[string]func`, not a registry or reflection (`T7`).
+- Request fields decode as `json.RawMessage`, then operands via `json.Number`, so the handler
+  can tell "absent" from "wrong type" from "not finite" and return the right message for each
+  (`T6`).
+- Request body capped at 1 MiB via `http.MaxBytesReader` → `413` (`T18`).
+
+**Frontend**
+
+- Validation runs on both sides; the backend re-checks everything and wins any disagreement.
+  The client copies the backend's exact error wording so the user cannot tell which layer
+  rejected the input (`T9`, `T14`).
+- One explicit **Calculate** button — no recalculation per keystroke, which would need
+  debouncing and out-of-order handling (`T11`).
+- Operand fields are `type="text"` + `inputMode="decimal"`, not `type="number"`, whose value
+  sanitisation would swallow invalid input before validation could explain it (`T13`).
+- Status region is one discriminated union (`idle | loading | result | error`), so impossible
+  combinations like "loading while showing an error" are unrepresentable (`T15`).
+- `api.ts` surfaces the backend's message rather than mapping status codes to its own copy
+  (`T16`).
+
+**Integration**
+
+- Dev cross-origin is handled by a Vite dev proxy, not backend CORS; the frontend calls the
+  relative URL `/calculate`, which also works if both are served from one origin (`T4`).
+
 ## API
 
 Single endpoint: `POST /calculate`
@@ -82,12 +133,38 @@ Error (`4xx`):
 { "error": "division by zero" }
 ```
 
+### Examples
+
+```
+# success
+$ curl -s -X POST localhost:8080/calculate \
+    -H 'Content-Type: application/json' \
+    -d '{"operation":"multiply","a":6,"b":7}'
+{"result":42}
+
+# unary operation — b omitted
+$ curl -s -X POST localhost:8080/calculate \
+    -H 'Content-Type: application/json' \
+    -d '{"operation":"sqrt","a":144}'
+{"result":12}
+
+# error — HTTP 400
+$ curl -s -X POST localhost:8080/calculate \
+    -H 'Content-Type: application/json' \
+    -d '{"operation":"divide","a":1,"b":0}'
+{"error":"division by zero"}
+```
+
+During development the same calls work against the Vite dev server on `localhost:5173`, which
+proxies `/calculate` to the backend.
+
 ### Error summary
 
 | Status | When | Examples |
 | ------ | ---- | -------- |
 | `404`  | Unknown path | anything other than `/calculate` |
 | `405`  | Wrong method | `GET /calculate` (response sets `Allow: POST`) |
+| `413`  | Body too large | request body over 1 MiB |
 | `400`  | Malformed request | empty body, invalid JSON, operand that isn't a number |
 | `400`  | Invalid input | missing `operation`, unknown operation, missing operand, non-finite operand |
 | `400`  | Undefined / out-of-range result | division by zero, `sqrt` of a negative number, overflow to `±Inf`/`NaN` |
@@ -141,3 +218,8 @@ the Go side.
 Built and tested on Node 22 LTS (managed via [nvm-windows](https://github.com/coreybutler/nvm-windows)).
 The frontend was initially scaffolded under Node 20.10, so `vite` 5 / `vitest` 2 / `jsdom` 25 are
 still pinned to that era; they can be bumped to current majors now that Node 22 is in use.
+
+`npm audit` flags advisories in this pinned `vite` / `vitest` toolchain; `npm audit --omit=dev`
+reports none. They are all `devDependency`-only dev-server / test-runner issues with no effect on
+the built output or the runtime dependencies. See
+[TECHNICAL_DEBTS.md D3](TECHNICAL_DEBTS.md).
